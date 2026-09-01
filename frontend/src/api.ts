@@ -68,6 +68,18 @@ export type AdminOverview = {
   data_status: string;
 };
 
+export type ModelPolicy = {
+  id: string;
+  version: string;
+  status: "draft" | "pending_review" | "active" | "retired";
+  weights: { fund_flow: number; momentum: number; news_authority_adjusted: number };
+  rationale: string;
+  review_round: number;
+  approval_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type WatchlistItem = {
   id: string;
   symbol: string;
@@ -256,6 +268,10 @@ export function getAnalyticsOverview(token: string): Promise<AnalyticsOverview> 
 
 export function getAdminOverview(token: string): Promise<AdminOverview> {
   return request<AdminOverview>("/admin/overview", {}, token);
+}
+
+export function getModelPolicies(token: string): Promise<ModelPolicy[]> {
+  return request<ModelPolicy[]>("/admin/model-policies", {}, token);
 }
 
 export function getWatchlist(token: string): Promise<WatchlistItem[]> {

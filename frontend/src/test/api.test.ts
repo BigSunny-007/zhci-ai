@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { clearSession, getAdminOverview, getAnalyticsOverview, getRecommendations, loadSession, login, refreshSession, saveSession } from "../api";
+import { clearSession, getAdminOverview, getAnalyticsOverview, getModelPolicies, getRecommendations, loadSession, login, refreshSession, saveSession } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -50,5 +50,13 @@ describe("API 会话客户端", () => {
     ));
     await expect(getAdminOverview("admin-token")).resolves.toEqual({ total_users: 2 });
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/admin/overview"), expect.anything());
+  });
+
+  it("读取策略版本审批状态", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      new Response(JSON.stringify([]), { status: 200 }),
+    ));
+    await expect(getModelPolicies("admin-token")).resolves.toEqual([]);
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/admin/model-policies"), expect.anything());
   });
 });

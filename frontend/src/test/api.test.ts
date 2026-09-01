@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { clearSession, getAdminOverview, getAnalyticsOverview, getAuditIntegrity, getModelPolicies, getRecommendations, loadSession, login, refreshSession, saveSession } from "../api";
+import { clearSession, getAdminOverview, getAnalyticsOverview, getAuditIntegrity, getModelPolicies, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, saveSession } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -66,5 +66,13 @@ describe("API 会话客户端", () => {
     ));
     await expect(getAuditIntegrity("admin-token")).resolves.toEqual({ checked_events: 1 });
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/admin/audit-integrity"), expect.anything());
+  });
+
+  it("读取建议调度状态", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ enabled: false, running: false }), { status: 200 }),
+    ));
+    await expect(getSchedulerStatus("admin-token")).resolves.toEqual({ enabled: false, running: false });
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/admin/scheduler"), expect.anything());
   });
 });

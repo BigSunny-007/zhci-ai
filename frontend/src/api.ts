@@ -89,6 +89,14 @@ export type AuditIntegrityReport = {
   data_scope: string;
 };
 
+export type SchedulerStatus = {
+  enabled: boolean;
+  running: boolean;
+  job_id: string;
+  next_run_at: string | null;
+  timezone: string;
+};
+
 export type WatchlistItem = {
   id: string;
   symbol: string;
@@ -285,6 +293,10 @@ export function getModelPolicies(token: string): Promise<ModelPolicy[]> {
 
 export function getAuditIntegrity(token: string): Promise<AuditIntegrityReport> {
   return request<AuditIntegrityReport>("/admin/audit-integrity", {}, token);
+}
+
+export function getSchedulerStatus(token: string): Promise<SchedulerStatus> {
+  return request<SchedulerStatus>("/admin/scheduler", {}, token);
 }
 
 export function getWatchlist(token: string): Promise<WatchlistItem[]> {

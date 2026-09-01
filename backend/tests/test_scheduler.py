@@ -1,6 +1,10 @@
 from datetime import UTC, datetime
 
-from app.services.scheduler import recommendation_scheduler, recommendation_trigger
+from app.services.scheduler import (
+    RECOMMENDATION_HORIZONS,
+    recommendation_scheduler,
+    recommendation_trigger,
+)
 
 
 def test_recommendation_trigger_uses_shanghai_slots():
@@ -19,3 +23,7 @@ def test_scheduler_is_safe_and_disabled_by_default():
     assert status["enabled"] is False
     assert status["running"] is False
     assert status["job_id"] == "hourly-recommendations"
+
+
+def test_scheduler_covers_short_swing_and_medium_horizons():
+    assert RECOMMENDATION_HORIZONS == ("1-2d", "1-5d", "medium")

@@ -27,6 +27,9 @@ class SchedulerRunResult:
     finished_at: datetime
 
 
+RECOMMENDATION_HORIZONS = ("1-2d", "1-5d", "medium")
+
+
 def recommendation_trigger() -> CronTrigger:
     hours = ",".join(str(hour) for hour, _ in RECOMMENDATION_SLOTS)
     return CronTrigger(
@@ -87,50 +90,54 @@ async def run_recommendation_cycle() -> SchedulerRunResult:
                         current_position = (
                             holding.quantity * holding.cost_price / total_cost
                         ).quantize(Decimal("0.0001"))
-                    recommendation = generate_recommendation(
-                        quote,
-                        news,
-                        user.investment_horizon or "1-5d",
-                        current_position=current_position,
-                        risk_profile=user.risk_profile,
-                        target_return_rate=user.target_return_rate,
-                        max_quote_age_seconds=settings.recommendation_quote_max_age_seconds,
-                        weights=weights,
-                        model_version=model_version,
-                        market_index=market_index,
-                    )
-                    generated_at = recommendation.generated_at
-                    if generated_at.tzinfo is None:
-                        generated_at = generated_at.replace(tzinfo=UTC)
-                    hour_start = generated_at.replace(minute=0, second=0, microsecond=0)
-                    existing = await db.scalar(
-                        select(AIRecommendation)
-                        .where(
-                            AIRecommendation.user_id == user.id,
-                            AIRecommendation.symbol == recommendation.symbol,
-                            AIRecommendation.horizon == recommendation.horizon,
-                            AIRecommendation.generated_at >= hour_start,
-                        )
-                        .order_by(desc(AIRecommendation.generated_at))
-                    )
-                    if existing:
-                        skipped_count += 1
-                        continue
-                    db.add(
-                        AIRecommendation(
-                            user_id=user.id,
-                            symbol=recommendation.symbol,
-                            horizon=recommendation.horizon,
-                            action=recommendation.action,
-                            confidence=recommendation.confidence,
-                            suggested_position=recommendation.suggested_position,
-                            rationale=recommendation.rationale,
-                            evidence=recommendation.evidence,
-                            model_version=recommendation.model_version,
-                            generated_at=generated_at,
-                        )
-                    )
-                    generated_count += 1
+                    for horizon in RECOMMENDATION_HORIZONS:
+                        try:
+                            recommendation = generate_recommendation(
+                                quote,
+                                news,
+                                horizon,
+                                current_position=current_position,
+                                risk_profile=user.risk_profile,
+                                target_return_rate=user.target_return_rate,
+                                max_quote_age_seconds=settings.recommendation_quote_max_age_seconds,
+                                weights=weights,
+                                model_version=model_version,
+                                market_index=market_index,
+                            )
+                            generated_at = recommendation.generated_at
+                            if generated_at.tzinfo is None:
+                                generated_at = generated_at.replace(tzinfo=UTC)
+                            hour_start = generated_at.replace(minute=0, second=0, microsecond=0)
+                            existing = await db.scalar(
+                                select(AIRecommendation)
+                                .where(
+                                    AIRecommendation.user_id == user.id,
+                                    AIRecommendation.symbol == recommendation.symbol,
+                                    AIRecommendation.horizon == recommendation.horizon,
+                                    AIRecommendation.generated_at >= hour_start,
+                                )
+                                .order_by(desc(AIRecommendation.generated_at))
+                            )
+                            if existing:
+                                skipped_count += 1
+                                continue
+                            db.add(
+                                AIRecommendation(
+                                    user_id=user.id,
+                                    symbol=recommendation.symbol,
+                                    horizon=recommendation.horizon,
+                                    action=recommendation.action,
+                                    confidence=recommendation.confidence,
+                                    suggested_position=recommendation.suggested_position,
+                                    rationale=recommendation.rationale,
+                                    evidence=recommendation.evidence,
+                                    model_version=recommendation.model_version,
+                                    generated_at=generated_at,
+                                )
+                            )
+                            generated_count += 1
+                        except Exception:
+                            failed_count += 1
                 except Exception:
                     failed_count += 1
         db.add(

@@ -10,6 +10,7 @@ import NewsPanel from "./NewsPanel";
 import RiskProfilePanel from "./RiskProfilePanel";
 import EvidenceDrawer from "./EvidenceDrawer";
 import RecommendationTimeline from "./RecommendationTimeline";
+import MultiHorizonPanel from "./MultiHorizonPanel";
 import AnalyticsPanel from "./AnalyticsPanel";
 import AdminPanel from "./AdminPanel";
 import PolicyPanel from "./PolicyPanel";
@@ -262,6 +263,7 @@ function App() {
         <HoldingsPanel token={session?.accessToken ?? null} />
         <RiskProfilePanel token={session?.accessToken ?? null} profile={profile} onProfileUpdated={setProfile} />
         <RecommendationTimeline token={session?.accessToken ?? null} />
+        <MultiHorizonPanel token={session?.accessToken ?? null} symbol={selected.symbol} name={selected.name} />
         <AnalyticsPanel token={session?.accessToken ?? null} />
         <AdminPanel token={session?.accessToken ?? null} isAdmin={profile?.is_admin === true} />
         <PolicyPanel token={session?.accessToken ?? null} isAdmin={profile?.is_admin === true} />

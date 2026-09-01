@@ -28,9 +28,10 @@ from app.schemas.common import (
 from app.schemas.policy import PolicyWeights
 from app.services.data.provider import get_market_provider, market_provider_catalog
 from app.services.policy import default_policy_weights, get_active_policy
+from app.services.rate_limit import MarketRateLimit
 from app.services.recommendation import generate_recommendation
 
-router = APIRouter(prefix="/market", tags=["行情"])
+router = APIRouter(prefix="/market", tags=["行情"], dependencies=[MarketRateLimit])
 
 
 @router.get("/session", response_model=MarketSessionResponse)

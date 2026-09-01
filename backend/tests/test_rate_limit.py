@@ -16,3 +16,9 @@ def test_rate_limiter_keys_are_isolated_and_resettable():
     assert limiter.allow("two", limit=1)[0]
     limiter.reset()
     assert limiter.allow("one", limit=1)[0]
+
+
+def test_market_namespace_is_isolated_from_auth():
+    limiter = SlidingWindowRateLimiter()
+    assert limiter.allow("auth:client:/login", limit=1)[0]
+    assert limiter.allow("market:client:/quote", limit=1)[0]

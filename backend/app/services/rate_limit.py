@@ -49,3 +49,21 @@ async def auth_rate_limit(request: Request) -> None:
 
 
 AuthRateLimit = Depends(auth_rate_limit)
+
+
+async def market_rate_limit(request: Request) -> None:
+    settings = get_settings()
+    if not settings.rate_limit_enabled:
+        return
+    client_host = request.client.host if request.client else "unknown"
+    key = f"market:{client_host}:{request.url.path}"
+    allowed, retry_after = limiter.allow(key, settings.market_rate_limit_per_minute)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="行情请求过于频繁，请稍后再试",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+
+MarketRateLimit = Depends(market_rate_limit)

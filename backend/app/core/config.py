@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     expose_verification_token: bool = False
     rate_limit_enabled: bool = True
     auth_rate_limit_per_minute: int = 20
+    market_rate_limit_per_minute: int = 120
     database_url: str = "mysql+asyncmy://zhice:zhice@localhost:3306/zhice_ai"
     redis_url: str = "redis://localhost:6379/0"
     market_data_provider: str = "demo"

@@ -287,6 +287,13 @@ export function register(
   }));
 }
 
+export function resendVerification(email: string): Promise<{ message: string; emailVerified: boolean; verificationToken?: string }> {
+  return request<{ message: string; email_verified: boolean; verification_token?: string }>("/auth/resend-verification", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  }).then((result) => ({ message: result.message, emailVerified: result.email_verified, verificationToken: result.verification_token }));
+}
+
 export function getMe(token: string): Promise<UserProfile> {
   return request<UserProfile>("/auth/me", {}, token);
 }

@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { ArrowRight, Eye, EyeOff, ShieldCheck, Sparkles } from "lucide-react";
-import { ApiError, clearSession, login, register, saveSession, TokenSession, UserProfile } from "./api";
+import { ApiError, clearSession, login, register, resendVerification, saveSession, TokenSession, UserProfile } from "./api";
 import "./auth.css";
 
 type AuthViewProps = {
@@ -17,6 +17,7 @@ export default function AuthView({ onAuthenticated, onDemo }: AuthViewProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [verificationPending, setVerificationPending] = useState(false);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -32,6 +33,7 @@ export default function AuthView({ onAuthenticated, onDemo }: AuthViewProps) {
         const result = await register(email, password, displayName || "投资者");
         if (result.verificationRequired) {
           clearSession();
+          setVerificationPending(true);
           setNotice("注册成功，请完成邮箱验证后再登录。开发环境可在接口响应中查看验证令牌。");
           return;
         }
@@ -40,6 +42,19 @@ export default function AuthView({ onAuthenticated, onDemo }: AuthViewProps) {
       }
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : "网络暂不可用，请检查 API 地址");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resend = async () => {
+    if (!email) return;
+    setBusy(true);
+    try {
+      const result = await resendVerification(email);
+      setNotice(`${result.message}${result.verificationToken ? ` · 开发令牌：${result.verificationToken}` : ""}`);
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : "验证邮件发送失败");
     } finally {
       setBusy(false);
     }
@@ -60,6 +75,7 @@ export default function AuthView({ onAuthenticated, onDemo }: AuthViewProps) {
           <label>密码<div className="password-field"><input value={password} onChange={(event) => setPassword(event.target.value)} type={showPassword ? "text" : "password"} minLength={8} placeholder="至少 8 位字符" autoComplete={mode === "login" ? "current-password" : "new-password"} required /><button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "隐藏密码" : "显示密码"}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div></label>
           {error && <p className="auth-error" role="alert">{error}</p>}
           {notice && <p className="auth-notice" role="status">{notice}</p>}
+          {verificationPending && <button type="button" className="resend-verification" onClick={() => void resend()} disabled={busy}>重新发送验证邮件</button>}
           <button className="auth-submit" disabled={busy}>{busy ? "处理中…" : mode === "login" ? "进入工作台" : "创建我的工作区"}<ArrowRight size={16} /></button>
         </form>
         <div className="auth-foot"><ShieldCheck size={14} /><span>数据仅用于投研辅助，不构成投资建议</span></div>

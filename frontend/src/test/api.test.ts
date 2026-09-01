@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { changePassword, clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getModelPolicies, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, saveSession, updateAlert } from "../api";
+import { changePassword, clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getModelPolicies, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, resendVerification, saveSession, updateAlert } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -110,6 +110,12 @@ describe("API 会话客户端", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: "密码已更新" }), { status: 200 })));
     await expect(changePassword("user-token", "old-pass", "new-pass")).resolves.toBeUndefined();
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/auth/change-password"), expect.objectContaining({ method: "POST" }));
+  });
+
+  it("重发邮箱验证邮件", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: "验证邮件已重新发送", email_verified: false }), { status: 200 })));
+    await expect(resendVerification("user@example.com")).resolves.toEqual({ message: "验证邮件已重新发送", emailVerified: false });
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/auth/resend-verification"), expect.objectContaining({ method: "POST" }));
   });
 
   it("读取、创建并管理站内提醒", async () => {

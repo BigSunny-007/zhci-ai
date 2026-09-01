@@ -238,3 +238,19 @@ class Alert(TimestampMixin, Base):
     message: Mapped[str] = mapped_column(String(240), default="智策提醒")
     channel: Mapped[str] = mapped_column(String(16), default="in_app")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class AlertTrigger(Base):
+    __tablename__ = "alert_triggers"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    alert_id: Mapped[UUID] = mapped_column(ForeignKey("alerts.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    symbol: Mapped[str] = mapped_column(String(24), index=True)
+    condition_type: Mapped[str] = mapped_column(String(32))
+    threshold: Mapped[Decimal] = mapped_column(Numeric(18, 4))
+    observed_value: Mapped[Decimal] = mapped_column(Numeric(24, 6))
+    message: Mapped[str] = mapped_column(String(240))
+    source: Mapped[str] = mapped_column(String(40))
+    evidence: Mapped[dict] = mapped_column(JSON, default=dict)
+    triggered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)

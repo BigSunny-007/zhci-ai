@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AlertCreate(BaseModel):
@@ -18,9 +18,35 @@ class AlertCreate(BaseModel):
 
 
 class AlertResponse(AlertCreate):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     is_active: bool
 
 
 class AlertUpdate(BaseModel):
     is_active: bool
+
+
+class AlertTriggerResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    alert_id: UUID
+    symbol: str
+    condition_type: str
+    threshold: Decimal
+    observed_value: Decimal
+    message: str
+    source: str
+    evidence: dict
+    triggered_at: datetime
+
+
+class AlertCheckResponse(BaseModel):
+    checked_count: int
+    suppressed_count: int
+    failed_count: int
+    checked_at: datetime
+    data_status: str
+    triggers: list[AlertTriggerResponse]

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { addHolding, changePassword, clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getHistory, getMarketIndex, getModelPolicies, getPortfolioRisk, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, resendVerification, saveSession, updateAlert } from "../api";
+import { addHolding, changePassword, checkAlerts, clearSession, createAlert, deleteAlert, getAdminOverview, getAlertTriggers, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getHistory, getMarketIndex, getModelPolicies, getPortfolioRisk, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, resendVerification, saveSession, updateAlert } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -157,5 +157,15 @@ describe("API 会话客户端", () => {
     expect(fetch).toHaveBeenLastCalledWith(expect.stringContaining("/alerts"), expect.objectContaining({ method: "POST" }));
     await expect(updateAlert("user-token", "a1", false)).resolves.toEqual({ id: "a1", is_active: false });
     await expect(deleteAlert("user-token", "a1")).resolves.toBeUndefined();
+  });
+
+  it("检查提醒并读取触发历史", async () => {
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ checked_count: 1, suppressed_count: 0, failed_count: 0, checked_at: "2026-09-02T02:00:00Z", data_status: "发现 1 条触发提醒，已写入历史", triggers: [] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200 })));
+    await expect(checkAlerts("user-token")).resolves.toMatchObject({ checked_count: 1 });
+    await expect(getAlertTriggers("user-token", 8)).resolves.toEqual([]);
+    expect(fetch).toHaveBeenNthCalledWith(1, expect.stringContaining("/alerts/check"), expect.objectContaining({ method: "POST" }));
+    expect(fetch).toHaveBeenNthCalledWith(2, expect.stringContaining("/alerts/triggers?limit=8"), expect.anything());
   });
 });

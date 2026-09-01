@@ -5,10 +5,19 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import current_user
+from app.core.config import get_settings
 from app.db.session import get_db
-from app.models import Alert, AuditLog, User
-from app.schemas.alerts import AlertCreate, AlertResponse, AlertUpdate
+from app.models import Alert, AlertTrigger, AuditLog, User
+from app.schemas.alerts import (
+    AlertCheckResponse,
+    AlertCreate,
+    AlertResponse,
+    AlertTriggerResponse,
+    AlertUpdate,
+)
 from app.schemas.common import APIMessage
+from app.services.alerts import check_active_alerts
+from app.services.data.provider import get_market_provider
 
 router = APIRouter(prefix="/alerts", tags=["提醒"])
 
@@ -55,6 +64,68 @@ async def create_alert(
     await db.commit()
     await db.refresh(row)
     return AlertResponse.model_validate(row)
+
+
+@router.get("/triggers", response_model=list[AlertTriggerResponse])
+async def list_alert_triggers(
+    limit: int = 20,
+    user: User = Depends(current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[AlertTriggerResponse]:
+    safe_limit = min(max(limit, 1), 100)
+    rows = (
+        await db.scalars(
+            select(AlertTrigger)
+            .where(AlertTrigger.user_id == user.id)
+            .order_by(AlertTrigger.triggered_at.desc())
+            .limit(safe_limit)
+        )
+    ).all()
+    return [AlertTriggerResponse.model_validate(row) for row in rows]
+
+
+@router.post("/check", response_model=AlertCheckResponse)
+async def check_alerts(
+    user: User = Depends(current_user), db: AsyncSession = Depends(get_db)
+) -> AlertCheckResponse:
+    checked_at = datetime.now(UTC)
+    provider_name = get_settings().market_data_provider
+    result = await check_active_alerts(
+        db,
+        get_market_provider(provider_name),
+        user_id=user.id,
+        now=checked_at,
+    )
+    db.add(
+        AuditLog(
+            actor_user_id=user.id,
+            action="alert.checked",
+            resource_type="alert",
+            metadata_json={
+                "checked_count": result.checked_count,
+                "triggered_count": len(result.triggers),
+                "suppressed_count": result.suppressed_count,
+                "failed_count": result.failed_count,
+                "provider": provider_name,
+            },
+            created_at=checked_at,
+        )
+    )
+    await db.commit()
+    if result.failed_count:
+        data_status = f"{result.failed_count} 条提醒数据读取失败，其余结果已保留"
+    elif result.triggers:
+        data_status = f"发现 {len(result.triggers)} 条触发提醒，已写入历史"
+    else:
+        data_status = "当前没有满足条件的提醒"
+    return AlertCheckResponse(
+        checked_count=result.checked_count,
+        suppressed_count=result.suppressed_count,
+        failed_count=result.failed_count,
+        checked_at=checked_at,
+        data_status=data_status,
+        triggers=[AlertTriggerResponse.model_validate(item) for item in result.triggers],
+    )
 
 
 @router.patch("/{alert_id}", response_model=AlertResponse)

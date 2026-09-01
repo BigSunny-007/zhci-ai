@@ -13,6 +13,7 @@ from app.core.trading_calendar import RECOMMENDATION_SLOTS, SHANGHAI_TZ
 from app.db.session import SessionLocal
 from app.models import AIRecommendation, AuditLog, Holding, User, WatchlistItem
 from app.schemas.policy import PolicyWeights
+from app.services.alerts import check_active_alerts
 from app.services.data.provider import get_market_provider
 from app.services.policy import default_policy_weights, get_active_policy
 from app.services.recommendation import generate_recommendation
@@ -45,6 +46,8 @@ async def run_recommendation_cycle() -> SchedulerRunResult:
     generated_count = 0
     skipped_count = 0
     failed_count = 0
+    alert_triggered_count = 0
+    alert_failed_count = 0
     settings = get_settings()
     provider = get_market_provider(settings.market_data_provider)
     try:
@@ -140,6 +143,12 @@ async def run_recommendation_cycle() -> SchedulerRunResult:
                             failed_count += 1
                 except Exception:
                     failed_count += 1
+        try:
+            alert_result = await check_active_alerts(db, provider, now=started_at)
+            alert_triggered_count = len(alert_result.triggers)
+            alert_failed_count = alert_result.failed_count
+        except Exception:
+            alert_failed_count = 1
         db.add(
             AuditLog(
                 action="scheduler.recommendation_cycle",
@@ -150,6 +159,8 @@ async def run_recommendation_cycle() -> SchedulerRunResult:
                     "failed_count": failed_count,
                     "provider": provider.name,
                     "model_policy_version": model_version,
+                    "alert_triggered_count": alert_triggered_count,
+                    "alert_failed_count": alert_failed_count,
                 },
                 created_at=started_at,
             )

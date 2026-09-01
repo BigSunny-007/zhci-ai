@@ -150,6 +150,28 @@ export type Alert = {
   is_active: boolean;
 };
 
+export type AlertTrigger = {
+  id: string;
+  alert_id: string;
+  symbol: string;
+  condition_type: Alert["condition_type"];
+  threshold: number;
+  observed_value: number;
+  message: string;
+  source: string;
+  evidence: Record<string, unknown>;
+  triggered_at: string;
+};
+
+export type AlertCheckResponse = {
+  checked_count: number;
+  suppressed_count: number;
+  failed_count: number;
+  checked_at: string;
+  data_status: string;
+  triggers: AlertTrigger[];
+};
+
 export type WatchlistItem = {
   id: string;
   symbol: string;
@@ -440,6 +462,14 @@ export function getDataProviders(token: string): Promise<DataProviderStatus[]> {
 
 export function getAlerts(token: string): Promise<Alert[]> {
   return request<Alert[]>("/alerts", {}, token);
+}
+
+export function getAlertTriggers(token: string, limit = 20): Promise<AlertTrigger[]> {
+  return request<AlertTrigger[]>(`/alerts/triggers?limit=${limit}`, {}, token);
+}
+
+export function checkAlerts(token: string): Promise<AlertCheckResponse> {
+  return request<AlertCheckResponse>("/alerts/check", { method: "POST" }, token);
 }
 
 export function createAlert(

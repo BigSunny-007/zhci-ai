@@ -153,6 +153,18 @@ export type HoldingItem = {
   max_loss?: number | null;
 };
 
+export type PortfolioSummary = {
+  cost_basis: number;
+  market_value: number;
+  unrealized_pnl: number;
+  unrealized_pnl_percent: number;
+  positions_count: number;
+  valued_positions: number;
+  data_status: string;
+  source: string;
+  as_of: string;
+};
+
 export type MarketSession = {
   as_of: string;
   timezone: string;
@@ -397,6 +409,10 @@ export function removeWatchlist(token: string, symbol: string): Promise<void> {
 
 export function getHoldings(token: string): Promise<HoldingItem[]> {
   return request<HoldingItem[]>("/portfolio/holdings", {}, token);
+}
+
+export function getPortfolioSummary(token: string): Promise<PortfolioSummary> {
+  return request<PortfolioSummary>("/portfolio/summary", {}, token);
 }
 
 export function addHolding(

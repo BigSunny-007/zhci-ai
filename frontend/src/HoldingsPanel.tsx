@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Plus, WalletCards, X } from "lucide-react";
-import { addHolding, getHoldings, HoldingItem, removeHolding } from "./api";
+import { addHolding, getHoldings, getPortfolioSummary, HoldingItem, PortfolioSummary, removeHolding } from "./api";
 import "./holdings.css";
 
 type HoldingsPanelProps = { token: string | null };
@@ -13,13 +13,15 @@ export default function HoldingsPanel({ token }: HoldingsPanelProps) {
   const [quantity, setQuantity] = useState("");
   const [costPrice, setCostPrice] = useState("");
   const [status, setStatus] = useState("登录后同步你的真实持仓");
+  const [summary, setSummary] = useState<PortfolioSummary | null>(null);
 
   useEffect(() => {
     if (!token) return;
     setStatus("正在同步持仓…");
-    getHoldings(token).then((items) => {
+    Promise.all([getHoldings(token), getPortfolioSummary(token)]).then(([items, nextSummary]) => {
       setHoldings(items);
-      setStatus(items.length ? "已同步 · 仅当前账号可见" : "还没有持仓，添加第一笔记录");
+      setSummary(nextSummary);
+      setStatus(items.length ? `${nextSummary.data_status} · 仅当前账号可见` : "还没有持仓，添加第一笔记录");
     }).catch(() => setStatus("持仓同步失败 · 请稍后重试"));
   }, [token]);
 
@@ -49,8 +51,10 @@ export default function HoldingsPanel({ token }: HoldingsPanelProps) {
     }
   };
 
+  const displaySummary = summary ?? { cost_basis: costBasis, market_value: 0, unrealized_pnl: 0, unrealized_pnl_percent: 0, positions_count: holdings.length, valued_positions: 0, data_status: "未登录不估值", source: "—", as_of: "" };
   return <section className="panel holdings-panel">
-    <div className="panel-header compact"><div><div className="section-kicker"><WalletCards size={14}/>我的持仓</div><h2>成本基数 <span className="holdings-total">¥{costBasis.toLocaleString("zh-CN", { maximumFractionDigits: 2 })}</span></h2><p>{status}</p></div><button className="add-holding-button" onClick={() => setOpen((visible) => !visible)} aria-label={open ? "关闭持仓表单" : "添加持仓"}>{open ? <X size={16}/> : <Plus size={16}/>}</button></div>
+    <div className="panel-header compact"><div><div className="section-kicker"><WalletCards size={14}/>我的持仓</div><h2>组合市值 <span className="holdings-total">¥{displaySummary.market_value.toLocaleString("zh-CN", { maximumFractionDigits: 2 })}</span></h2><p>{status}</p></div><button className="add-holding-button" onClick={() => setOpen((visible) => !visible)} aria-label={open ? "关闭持仓表单" : "添加持仓"}>{open ? <X size={16}/> : <Plus size={16}/>}</button></div>
+    {summary && <div className="holdings-summary"><span>成本 ¥{summary.cost_basis.toLocaleString("zh-CN", { maximumFractionDigits: 2 })}</span><strong className={summary.unrealized_pnl >= 0 ? "holding-positive" : "holding-negative"}>{summary.unrealized_pnl >= 0 ? "+" : ""}¥{summary.unrealized_pnl.toLocaleString("zh-CN", { maximumFractionDigits: 2 })}（{summary.unrealized_pnl_percent >= 0 ? "+" : ""}{(summary.unrealized_pnl_percent * 100).toFixed(2)}%）</strong><small>已估值 {summary.valued_positions}/{summary.positions_count}</small></div>}
     {open && <form className="holding-form" onSubmit={submit}><input value={symbol} onChange={(event) => setSymbol(event.target.value)} placeholder="股票代码" required minLength={2}/><input value={name} onChange={(event) => setName(event.target.value)} placeholder="名称（可选）"/><input value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder="持仓数量" type="number" min="0" step="any" required/><input value={costPrice} onChange={(event) => setCostPrice(event.target.value)} placeholder="成本价" type="number" min="0.01" step="any" required/><button className="holding-submit" disabled={!token}>保存持仓</button></form>}
     {holdings.length > 0 && <div className="holdings-list">{holdings.slice(0, 4).map((item) => <div className="holding-row" key={item.id}><span><strong>{item.name}</strong><small>{item.symbol}</small></span><span>{item.quantity.toLocaleString("zh-CN")} 股</span><strong>¥{(item.quantity * item.cost_price).toLocaleString("zh-CN", { maximumFractionDigits: 2 })}</strong><button className="holding-remove" onClick={() => remove(item)}>删除</button></div>)}</div>}
   </section>;

@@ -1,10 +1,12 @@
 from datetime import UTC, datetime
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import current_user
+from app.core.config import get_settings
 from app.db.session import get_db
 from app.models import AuditLog, Holding, User, WatchlistItem
 from app.schemas.common import (
@@ -12,11 +14,50 @@ from app.schemas.common import (
     HoldingCreate,
     HoldingResponse,
     HoldingUpdate,
+    PortfolioSummary,
     WatchlistCreate,
     WatchlistResponse,
 )
+from app.services.data.provider import get_market_provider
 
 router = APIRouter(prefix="/portfolio", tags=["组合"])
+
+
+@router.get("/summary", response_model=PortfolioSummary)
+async def portfolio_summary(
+    user: User = Depends(current_user), db: AsyncSession = Depends(get_db)
+) -> PortfolioSummary:
+    holdings = (await db.scalars(select(Holding).where(Holding.user_id == user.id))).all()
+    provider_name = get_settings().market_data_provider
+    provider = get_market_provider(provider_name)
+    cost_basis = sum((item.quantity * item.cost_price for item in holdings), Decimal("0"))
+    market_value = Decimal("0")
+    valued_positions = 0
+    for item in holdings:
+        try:
+            quote = await provider.quote(item.symbol, item.name)
+        except Exception:
+            continue
+        market_value += item.quantity * quote.price
+        valued_positions += 1
+    pnl = market_value - cost_basis
+    pnl_percent = (pnl / cost_basis if cost_basis else Decimal("0")).quantize(Decimal("0.0001"))
+    status_text = (
+        f"数据源：{provider_name}"
+        if valued_positions == len(holdings)
+        else f"数据源：{provider_name}；{len(holdings) - valued_positions} 个持仓暂无法估值"
+    )
+    return PortfolioSummary(
+        cost_basis=cost_basis,
+        market_value=market_value,
+        unrealized_pnl=pnl,
+        unrealized_pnl_percent=pnl_percent,
+        positions_count=len(holdings),
+        valued_positions=valued_positions,
+        data_status=status_text,
+        source=provider_name,
+        as_of=datetime.now(UTC),
+    )
 
 
 @router.get("/holdings", response_model=list[HoldingResponse])

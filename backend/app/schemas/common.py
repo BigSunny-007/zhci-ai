@@ -87,6 +87,18 @@ class HoldingResponse(HoldingCreate):
     id: UUID
 
 
+class PortfolioSummary(BaseModel):
+    cost_basis: Decimal
+    market_value: Decimal
+    unrealized_pnl: Decimal
+    unrealized_pnl_percent: Decimal
+    positions_count: int
+    valued_positions: int
+    data_status: str
+    source: str
+    as_of: datetime
+
+
 class WatchlistCreate(BaseModel):
     symbol: str = Field(min_length=2, max_length=24)
     name: str = Field(min_length=1, max_length=80)

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { changePassword, clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getModelPolicies, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, resendVerification, saveSession, updateAlert } from "../api";
+import { changePassword, clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getHistory, getModelPolicies, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, resendVerification, saveSession, updateAlert } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -116,6 +116,12 @@ describe("API 会话客户端", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: "验证邮件已重新发送", email_verified: false }), { status: 200 })));
     await expect(resendVerification("user@example.com")).resolves.toEqual({ message: "验证邮件已重新发送", emailVerified: false });
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/auth/resend-verification"), expect.objectContaining({ method: "POST" }));
+  });
+
+  it("读取历史行情", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([{ time: "2026-09-01T00:00:00Z", close: 10 }]), { status: 200 })));
+    await expect(getHistory("user-token", "600519.SH", 30)).resolves.toEqual([{ time: "2026-09-01T00:00:00Z", close: 10 }]);
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/market/history?symbol=600519.SH&days=30"), expect.anything());
   });
 
   it("读取、创建并管理站内提醒", async () => {

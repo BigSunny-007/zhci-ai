@@ -53,6 +53,21 @@ export type AnalyticsOverview = {
   series: Array<{ date: string; portfolio: number; benchmark: number }>;
 };
 
+export type AdminOverview = {
+  generated_at: string;
+  total_users: number;
+  active_users: number;
+  verified_users: number;
+  users_with_holdings: number;
+  holdings_cost_basis: number;
+  recommendations_count: number;
+  evaluated_recommendations: number;
+  login_events_24h: number;
+  market_net_inflow_24h: number;
+  data_scope: string;
+  data_status: string;
+};
+
 export type WatchlistItem = {
   id: string;
   symbol: string;
@@ -237,6 +252,10 @@ export function getRecommendations(token: string, limit = 12): Promise<Recommend
 
 export function getAnalyticsOverview(token: string): Promise<AnalyticsOverview> {
   return request<AnalyticsOverview>("/analytics/overview", {}, token);
+}
+
+export function getAdminOverview(token: string): Promise<AdminOverview> {
+  return request<AdminOverview>("/admin/overview", {}, token);
 }
 
 export function getWatchlist(token: string): Promise<WatchlistItem[]> {

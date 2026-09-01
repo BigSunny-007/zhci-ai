@@ -8,5 +8,6 @@ describe("智策 AI 工作台", () => {
     expect(screen.getByText("智策 AI")).toBeTruthy();
     expect(screen.getAllByText("贵州茅台").length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText("AI 研判").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("演示行情 · 非实时")).toBeTruthy();
   });
 });

@@ -8,6 +8,7 @@ import AuthView from "./AuthView";
 import HoldingsPanel from "./HoldingsPanel";
 import NewsPanel from "./NewsPanel";
 import RiskProfilePanel from "./RiskProfilePanel";
+import "./freshness.css";
 import { addWatchlist, ApiError, clearSession, getMarketSession, getMe, getQuote, getRecommendation, getWatchlist, loadSession, logout, refreshSession, saveSession, TokenSession, UserProfile, MarketQuote, Recommendation, MarketSession } from "./api";
 
 type WatchItem = { symbol: string; name: string; price: string; change: string; percent: string; inflow: string; status: "up" | "down" };
@@ -126,6 +127,13 @@ function App() {
   const sessionLabel = marketSession?.session === "morning" || marketSession?.session === "afternoon" ? "沪深市场交易中" : marketSession?.is_trading_day ? "沪深市场休市" : "非交易日";
   const nextSlotLabel = marketSession?.next_recommendation_at ? new Date(marketSession.next_recommendation_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) : "下个交易日";
   const asOfLabel = marketSession?.as_of ? new Date(marketSession.as_of).toLocaleDateString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" }) : "2026年09月01日";
+  const quoteFreshness = liveRecommendation?.evidence?.quote_freshness === "stale" ? "stale" : liveRecommendation ? "fresh" : "demo";
+  const quoteAge = Number(liveRecommendation?.evidence?.quote_age_seconds);
+  const freshnessLabel = quoteFreshness === "stale"
+    ? `行情快照已延迟 ${Number.isFinite(quoteAge) ? Math.max(0, Math.round(quoteAge / 60)) : "较久"} 分钟`
+    : quoteFreshness === "fresh"
+      ? `行情快照正常 · ${Number.isFinite(quoteAge) ? Math.max(0, Math.round(quoteAge / 60)) : 0} 分钟前`
+      : "演示行情 · 非实时";
 
   if (REQUIRE_AUTH && !session && !demoMode) {
     return <AuthView onAuthenticated={handleAuthenticated} onDemo={() => setDemoMode(true)} />;
@@ -162,6 +170,7 @@ function App() {
       <header className="topbar"><div className="breadcrumb"><Menu className="mobile-menu" size={19}/><span>工作台</span><span className="slash">/</span><strong>{activeNav}</strong></div><div className="top-actions"><span className="market-status"><i className={marketSession?.session === "morning" || marketSession?.session === "afternoon" ? "" : "muted"}/>{sessionLabel}</span><button className="icon-button" aria-label="帮助"><CircleHelp size={18}/></button><button className="icon-button" aria-label="通知"><Bell size={18}/><i className="notification-dot"/></button>{!session && <button className="login-link" onClick={() => setAuthVisible(true)}>登录同步数据</button>}<div className="date-chip">{asOfLabel} <ChevronDown size={14}/></div></div></header>
       {notice && <div className="toast" role="status">{notice}<button onClick={() => setNotice(null)}><X size={15}/></button></div>}
       <div className={session ? "sync-strip connected" : "sync-strip"}><span className="sync-dot"/>{syncState}{liveQuote && <span> · {liveQuote.symbol} {liveQuote.change_percent >= 0 ? "上涨" : "下跌"} {Math.abs(liveQuote.change_percent).toFixed(2)}%</span>}</div>
+      <div className={`freshness-banner ${quoteFreshness}`} role="status"><ShieldCheck size={13}/><span>{freshnessLabel}</span>{quoteFreshness === "stale" && <em>暂停新增仓位</em>}</div>
       <div className="page-wrap">
         <section className="hero-row"><div><div className="eyebrow"><span className="live-dot"/>{marketSession?.can_generate_recommendation ? "建议槽位 · 当前可更新" : `市场状态 · 下次建议 ${nextSlotLabel}`}</div><h1>早上好，林先生<span className="wave">✦</span></h1><p className="hero-subtitle">把复杂的市场信息，变成每一次决策前都看得懂的依据。</p></div><div className="hero-actions"><button className="secondary-button"><Command size={16}/>快捷键 <kbd>⌘ K</kbd></button><button className="primary-button" onClick={() => setNotice("正在生成最新 AI 研判…")}><Sparkles size={16}/>生成本次研判</button></div></section>
         <section className="overview-grid"><div className="stat-card stat-card-dark"><div className="card-label">我的组合总资产 <Eye size={15}/></div><div className="stat-value">¥ 286,480.00</div><div className="stat-meta positive">+¥ 4,286.20 <span>+1.52% 今日</span></div><div className="area-chart"><div className="chart-labels"><span>09:30</span><span>10:00</span><span>10:30</span><span>11:30</span></div><svg viewBox="0 0 420 100" preserveAspectRatio="none"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#c99c69" stopOpacity=".32"/><stop offset="1" stopColor="#c99c69" stopOpacity="0"/></linearGradient></defs><path d="M0 78 C32 74 40 62 66 70 S104 45 135 59 S170 52 198 63 S232 30 260 42 S300 45 320 30 S357 22 380 28 S402 8 420 12 V100 H0 Z" fill="url(#area)"/><path d="M0 78 C32 74 40 62 66 70 S104 45 135 59 S170 52 198 63 S232 30 260 42 S300 45 320 30 S357 22 380 28 S402 8 420 12" fill="none" stroke="#d8ad79" strokeWidth="2"/></svg></div></div><div className="stat-card"><div className="card-label">今日大盘 <span className="index-tag">上证</span></div><div className="market-stat-row"><div><div className="stat-value small">3,387.42</div><div className="stat-meta positive">+0.63% <span>+21.10</span></div></div><MiniSparkline/></div><div className="stat-footer"><span>成交额 <strong>4,128亿</strong></span><span>上涨 <strong className="red">2,846</strong></span><span>下跌 <strong className="green">1,702</strong></span></div></div><div className="stat-card ai-card"><div className="card-label"><span className="ai-icon"><Sparkles size={13}/></span>AI 市场温度 <span className="info-dot">i</span></div><div className="temperature-row"><div className="temperature">偏多</div><div className="temperature-score">72<span>/100</span></div></div><div className="meter"><div style={{width:"72%"}}/></div><p>资金与情绪共振，关注午后量能是否延续。</p><button onClick={() => setActiveNav("AI 研判")}>查看研判依据 <span>→</span></button></div></section>

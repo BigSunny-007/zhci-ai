@@ -19,7 +19,12 @@ from app.core.security import (
 )
 from app.db.session import get_db
 from app.models import AIRecommendation, Alert, AuditLog, Holding, User, WatchlistItem
-from app.schemas.account import AuditEventExport, DeleteAccountRequest, UserDataExport
+from app.schemas.account import (
+    AuditEventExport,
+    DeleteAccountRequest,
+    PasswordChangeRequest,
+    UserDataExport,
+)
 from app.schemas.common import (
     APIMessage,
     HoldingResponse,
@@ -265,6 +270,23 @@ async def delete_account(
     await db.delete(user)
     await db.commit()
     return APIMessage(message="账号及个人投研数据已删除，保留的审计记录已去标识化")
+
+
+@router.post("/change-password", response_model=APIMessage)
+async def change_password(
+    payload: PasswordChangeRequest,
+    user: User = Depends(current_user),
+    db: AsyncSession = Depends(get_db),
+) -> APIMessage:
+    if not verify_password(payload.current_password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="当前密码错误")
+    if payload.current_password == payload.new_password:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="新密码不能与当前密码相同")
+    user.password_hash = hash_password(payload.new_password)
+    user.session_version += 1
+    await _audit(db, action="auth.password_changed", actor_user_id=user.id, resource_id=str(user.id))
+    await db.commit()
+    return APIMessage(message="密码已更新，请重新登录")
 
 
 @router.get("/me", response_model=UserResponse)

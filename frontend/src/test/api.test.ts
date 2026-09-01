@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getModelPolicies, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, saveSession, updateAlert } from "../api";
+import { changePassword, clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getModelPolicies, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, saveSession, updateAlert } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -104,6 +104,12 @@ describe("API 会话客户端", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ exported_at: "2026-09-01T00:00:00Z", holdings: [] }), { status: 200 })));
     await expect(getDataExport("user-token")).resolves.toEqual({ exported_at: "2026-09-01T00:00:00Z", holdings: [] });
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/auth/data-export"), expect.anything());
+  });
+
+  it("轮换当前账号密码", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: "密码已更新" }), { status: 200 })));
+    await expect(changePassword("user-token", "old-pass", "new-pass")).resolves.toBeUndefined();
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/auth/change-password"), expect.objectContaining({ method: "POST" }));
   });
 
   it("读取、创建并管理站内提醒", async () => {

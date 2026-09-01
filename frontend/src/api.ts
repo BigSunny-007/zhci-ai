@@ -428,6 +428,10 @@ export function getDataExport(token: string): Promise<UserDataExport> {
   return request<UserDataExport>("/auth/data-export", {}, token);
 }
 
+export function changePassword(token: string, currentPassword: string, newPassword: string): Promise<void> {
+  return request<void>("/auth/change-password", { method: "POST", body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }) }, token).then(() => undefined);
+}
+
 export function addHolding(
   token: string,
   holding: Omit<HoldingItem, "id">,

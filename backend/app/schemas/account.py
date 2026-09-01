@@ -35,3 +35,8 @@ class UserDataExport(BaseModel):
 class DeleteAccountRequest(BaseModel):
     password: str = Field(min_length=8, max_length=128)
     confirmation: str = Field(pattern="^DELETE_ACCOUNT$")
+
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str = Field(min_length=8, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)

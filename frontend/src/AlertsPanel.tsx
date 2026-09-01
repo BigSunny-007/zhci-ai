@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Bell, Plus } from "lucide-react";
-import { Alert, createAlert, getAlerts } from "./api";
+import { Alert, createAlert, deleteAlert, getAlerts, updateAlert } from "./api";
 
 type AlertsPanelProps = { token: string | null; symbol: string };
 
@@ -58,6 +58,26 @@ export default function AlertsPanel({ token, symbol }: AlertsPanelProps) {
     }
   };
 
+  const toggle = async (alert: Alert) => {
+    if (!token) return;
+    try {
+      const updated = await updateAlert(token, alert.id, !alert.is_active);
+      setAlerts((current) => current.map((item) => item.id === updated.id ? updated : item));
+    } catch {
+      setState("error");
+    }
+  };
+
+  const remove = async (alert: Alert) => {
+    if (!token || !window.confirm(`删除 ${alert.symbol} 的提醒？`)) return;
+    try {
+      await deleteAlert(token, alert.id);
+      setAlerts((current) => current.filter((item) => item.id !== alert.id));
+    } catch {
+      setState("error");
+    }
+  };
+
   return <section className="alerts-panel panel">
     <div className="panel-header compact">
       <div><div className="section-kicker"><Bell size={14}/>智能提醒</div><h2>守住关键价位</h2><p>提醒只负责通知，不会自动交易</p></div>
@@ -73,6 +93,6 @@ export default function AlertsPanel({ token, symbol }: AlertsPanelProps) {
     {token && state === "loading" && !open && <p className="alerts-empty">正在同步提醒…</p>}
     {token && state === "error" && <p className="alerts-empty">提醒同步失败，请稍后重试。</p>}
     {token && state !== "error" && state !== "loading" && alerts.length === 0 && <p className="alerts-empty">还没有提醒。可针对当前自选股设置第一个条件。</p>}
-    {token && alerts.length > 0 && <div className="alerts-list">{alerts.slice(0, 4).map((alert) => <div className="alert-row" key={alert.id}><span className="alert-symbol">{alert.symbol}</span><span>{conditionLabels[alert.condition_type]} <strong>{alert.threshold}</strong></span><small>{frequencyLabels[alert.frequency]} · {alert.is_active ? "运行中" : "已暂停"}</small></div>)}</div>}
+    {token && alerts.length > 0 && <div className="alerts-list">{alerts.slice(0, 4).map((alert) => <div className="alert-row" key={alert.id}><span className="alert-symbol">{alert.symbol}</span><span>{conditionLabels[alert.condition_type]} <strong>{alert.threshold}</strong></span><small>{frequencyLabels[alert.frequency]} · {alert.is_active ? "运行中" : "已暂停"}</small><div className="alert-actions"><button onClick={() => void toggle(alert)}>{alert.is_active ? "暂停" : "恢复"}</button><button onClick={() => void remove(alert)}>删除</button></div></div>)}</div>}
   </section>;
 }

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { clearSession, createAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditIntegrity, getModelPolicies, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, saveSession } from "../api";
+import { clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditIntegrity, getModelPolicies, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, saveSession, updateAlert } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -76,12 +76,16 @@ describe("API 会话客户端", () => {
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/admin/scheduler"), expect.anything());
   });
 
-  it("读取并创建站内提醒", async () => {
+  it("读取、创建并管理站内提醒", async () => {
     vi.stubGlobal("fetch", vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ id: "a1", symbol: "600519.SH" }), { status: 201 })));
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: "a1", symbol: "600519.SH" }), { status: 201 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: "a1", is_active: false }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ message: "提醒已删除" }), { status: 200 })));
     await expect(getAlerts("user-token")).resolves.toEqual([]);
     await expect(createAlert("user-token", { symbol: "600519.SH", condition_type: "price_above", threshold: 1800, frequency: "once", message: "关注突破", channel: "in_app" })).resolves.toEqual({ id: "a1", symbol: "600519.SH" });
     expect(fetch).toHaveBeenLastCalledWith(expect.stringContaining("/alerts"), expect.objectContaining({ method: "POST" }));
+    await expect(updateAlert("user-token", "a1", false)).resolves.toEqual({ id: "a1", is_active: false });
+    await expect(deleteAlert("user-token", "a1")).resolves.toBeUndefined();
   });
 });

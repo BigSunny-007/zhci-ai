@@ -9,9 +9,10 @@
 .alert-form-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; color: #9aa5a1; font-size: 9px; }
 .alert-form-actions .primary-button { padding: 7px 11px; font-size: 10px; }
 .alerts-list { padding: 0 22px 17px; display: grid; gap: 7px; }
-.alert-row { display: grid; grid-template-columns: 92px 1fr auto; gap: 9px; align-items: center; color: #7d8984; font-size: 10px; padding-bottom: 7px; border-bottom: 1px solid #f1ede7; }
+.alert-row { display: grid; grid-template-columns: 92px 1fr auto auto; gap: 9px; align-items: center; color: #7d8984; font-size: 10px; padding-bottom: 7px; border-bottom: 1px solid #f1ede7; }
 .alert-row:last-child { border-bottom: 0; padding-bottom: 0; }
 .alert-row strong { color: #53615d; font-weight: 600; }
 .alert-symbol { color: #a87845; font-family: "DM Mono"; font-size: 9px; }
 .alert-row small { color: #a8b1ad; font-size: 9px; }
+.alert-actions { display: flex; gap: 5px; }.alert-actions button { border: 0; background: transparent; color: #a87845; cursor: pointer; font-size: 9px; padding: 2px; }.alert-actions button:last-child { color: #b47770; }
 @media (max-width: 760px) { .alert-form-row { grid-template-columns: 1fr 1fr; }.alert-form-row select:last-child { grid-column: span 2; }.alert-form-actions { align-items: flex-end; flex-direction: column; }.alert-row { grid-template-columns: 1fr; gap: 3px; } }

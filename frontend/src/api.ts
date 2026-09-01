@@ -325,6 +325,17 @@ export function createAlert(
   }, token);
 }
 
+export function updateAlert(token: string, alertId: string, isActive: boolean): Promise<Alert> {
+  return request<Alert>(`/alerts/${encodeURIComponent(alertId)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ is_active: isActive }),
+  }, token);
+}
+
+export function deleteAlert(token: string, alertId: string): Promise<void> {
+  return request<void>(`/alerts/${encodeURIComponent(alertId)}`, { method: "DELETE" }, token).then(() => undefined);
+}
+
 export function getWatchlist(token: string): Promise<WatchlistItem[]> {
   return request<WatchlistItem[]>("/portfolio/watchlist", {}, token);
 }

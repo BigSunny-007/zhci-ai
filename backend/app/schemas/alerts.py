@@ -20,3 +20,7 @@ class AlertCreate(BaseModel):
 class AlertResponse(AlertCreate):
     id: UUID
     is_active: bool
+
+
+class AlertUpdate(BaseModel):
+    is_active: bool

@@ -76,6 +76,7 @@ async def data_provider_health(
     results = await probe_configured_providers(
         settings.market_data_provider,
         timeout_seconds=settings.provider_health_timeout_seconds,
+        max_snapshot_age_seconds=settings.provider_health_max_snapshot_age_seconds,
     )
     for result in results:
         db.add(

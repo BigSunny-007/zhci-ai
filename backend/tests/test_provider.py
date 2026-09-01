@@ -1,4 +1,5 @@
 import asyncio
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
@@ -99,3 +100,25 @@ async def test_provider_health_audit_metadata_round_trips_without_datetime_objec
     assert restored["name"] == "demo"
     assert restored["status"] == "demo"
     assert restored["source"] == "demo"
+
+
+@pytest.mark.asyncio
+async def test_provider_health_probe_marks_old_snapshot_as_degraded(monkeypatch):
+    class OldProvider:
+        async def market_index(self):
+            return SimpleNamespace(
+                as_of=datetime.now(UTC) - timedelta(hours=1),
+                source="old-source",
+                data_status="available",
+            )
+
+    monkeypatch.setattr(
+        provider_health,
+        "market_provider_catalog",
+        lambda _: [{"name": "old", "kind": "测试", "description": "测试", "available": True, "configured": True}],
+    )
+    monkeypatch.setattr(provider_health, "get_market_provider", lambda _: OldProvider())
+    result = await probe_provider_health("old", "old", max_snapshot_age_seconds=60)
+    assert result["status"] == "degraded"
+    assert result["snapshot_max_age_seconds"] == 60
+    assert "超过 60 秒阈值" in result["message"]

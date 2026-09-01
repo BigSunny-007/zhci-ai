@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     ai_provider: str = "rule_based"
     recommendation_quote_max_age_seconds: int = 1800
     provider_health_timeout_seconds: float = Field(default=3.0, gt=0, le=30)
+    provider_health_max_snapshot_age_seconds: int = Field(default=1800, gt=0, le=86400)
     openai_compat_base_url: str = ""
     openai_compat_api_key: str = ""
     openai_compat_model: str = ""

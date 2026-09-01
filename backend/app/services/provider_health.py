@@ -22,6 +22,7 @@ def health_event_metadata(result: dict[str, Any]) -> dict[str, Any]:
             result["snapshot_as_of"].isoformat() if result["snapshot_as_of"] else None
         ),
         "snapshot_age_seconds": result["snapshot_age_seconds"],
+        "snapshot_max_age_seconds": result["snapshot_max_age_seconds"],
         "source": result["source"],
         "message": result["message"],
         "checked_at": result["checked_at"].isoformat(),
@@ -33,7 +34,7 @@ def health_result_from_event(event: Any) -> dict[str, Any]:
     checked_at = metadata.get("checked_at") or event.created_at
     snapshot_as_of = metadata.get("snapshot_as_of")
     status = metadata.get("status")
-    if status not in {"healthy", "demo", "timeout", "error", "unavailable"}:
+    if status not in {"healthy", "demo", "degraded", "timeout", "error", "unavailable"}:
         status = "error"
     return {
         "name": metadata.get("provider") or event.resource_id or "unknown",
@@ -44,6 +45,7 @@ def health_result_from_event(event: Any) -> dict[str, Any]:
         "latency_ms": metadata.get("latency_ms"),
         "snapshot_as_of": snapshot_as_of,
         "snapshot_age_seconds": metadata.get("snapshot_age_seconds"),
+        "snapshot_max_age_seconds": metadata.get("snapshot_max_age_seconds"),
         "source": metadata.get("source"),
         "message": metadata.get("message") or "历史探测记录",
         "checked_at": checked_at,
@@ -55,6 +57,7 @@ async def probe_provider_health(
     configured_name: str,
     *,
     timeout_seconds: float = 3.0,
+    max_snapshot_age_seconds: int = 1800,
 ) -> dict[str, Any]:
     catalog_item = next(
         (item for item in market_provider_catalog(configured_name) if item["name"] == provider_name),
@@ -71,6 +74,7 @@ async def probe_provider_health(
             "latency_ms": None,
             "snapshot_as_of": None,
             "snapshot_age_seconds": None,
+            "snapshot_max_age_seconds": max_snapshot_age_seconds,
             "source": None,
             "message": "Provider 未注册",
             "checked_at": checked_at,
@@ -85,6 +89,7 @@ async def probe_provider_health(
             "latency_ms": None,
             "snapshot_as_of": None,
             "snapshot_age_seconds": None,
+            "snapshot_max_age_seconds": max_snapshot_age_seconds,
             "source": None,
             "message": "依赖未安装或当前不可用",
             "checked_at": checked_at,
@@ -105,6 +110,7 @@ async def probe_provider_health(
             "latency_ms": round((perf_counter() - started) * 1000),
             "snapshot_as_of": None,
             "snapshot_age_seconds": None,
+            "snapshot_max_age_seconds": max_snapshot_age_seconds,
             "source": None,
             "message": f"探测超过 {timeout_seconds:g} 秒",
             "checked_at": checked_at,
@@ -126,28 +132,46 @@ async def probe_provider_health(
 
     snapshot_as_of = _utc(snapshot.as_of)
     age_seconds = max(0, int((datetime.now(UTC) - snapshot_as_of).total_seconds()))
+    is_stale = age_seconds > max_snapshot_age_seconds
     return {
         "name": provider_name,
         "kind": catalog_item["kind"],
         "description": catalog_item["description"],
         "configured": bool(catalog_item["configured"]),
-        "status": "demo" if snapshot.data_status == "demo" else "healthy",
+        "status": (
+            "degraded"
+            if is_stale
+            else "demo"
+            if snapshot.data_status == "demo"
+            else "healthy"
+        ),
         "latency_ms": round((perf_counter() - started) * 1000),
         "snapshot_as_of": snapshot_as_of,
         "snapshot_age_seconds": age_seconds,
         "source": snapshot.source,
-        "message": "指数快照探测成功",
+        "message": (
+            f"快照已延迟 {age_seconds} 秒，超过 {max_snapshot_age_seconds} 秒阈值"
+            if is_stale
+            else "指数快照探测成功"
+        ),
+        "snapshot_max_age_seconds": max_snapshot_age_seconds,
         "checked_at": checked_at,
     }
 
 
 async def probe_configured_providers(
-    configured_name: str, *, timeout_seconds: float = 3.0
+    configured_name: str,
+    *,
+    timeout_seconds: float = 3.0,
+    max_snapshot_age_seconds: int = 1800,
 ) -> list[dict[str, Any]]:
     catalog = market_provider_catalog(configured_name)
     return [
         await probe_provider_health(
-            str(item["name"]), configured_name, timeout_seconds=timeout_seconds
+            str(item["name"]),
+            configured_name,
+            timeout_seconds=timeout_seconds,
+            max_snapshot_age_seconds=max_snapshot_age_seconds,
         )
         for item in catalog
     ]

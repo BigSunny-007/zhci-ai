@@ -43,10 +43,11 @@ class DataProviderHealth(BaseModel):
     kind: str
     description: str
     configured: bool
-    status: Literal["healthy", "demo", "timeout", "error", "unavailable"]
+    status: Literal["healthy", "demo", "degraded", "timeout", "error", "unavailable"]
     latency_ms: int | None
     snapshot_as_of: datetime | None
     snapshot_age_seconds: int | None
+    snapshot_max_age_seconds: int | None = None
     source: str | None
     message: str
     checked_at: datetime

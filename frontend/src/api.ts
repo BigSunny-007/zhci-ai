@@ -143,10 +143,11 @@ export type DataProviderHealth = {
   kind: string;
   description: string;
   configured: boolean;
-  status: "healthy" | "demo" | "timeout" | "error" | "unavailable";
+  status: "healthy" | "demo" | "degraded" | "timeout" | "error" | "unavailable";
   latency_ms: number | null;
   snapshot_as_of: string | null;
   snapshot_age_seconds: number | null;
+  snapshot_max_age_seconds?: number | null;
   source: string | null;
   message: string;
   checked_at: string;

@@ -1,0 +1,6 @@
+.analytics-data-panel { margin-top: 15px; }
+.analytics-empty { margin: 0 22px 20px; color: #9aa5a1; font-size: 10px; }
+.analytics-data-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 3px 22px 16px; }
+.analytics-data-kpis div { display: flex; flex-direction: column; gap: 5px; }.analytics-data-kpis span { color: #9da7a3; font-size: 9px; }.analytics-data-kpis strong { color: #53615d; font-family: "DM Mono"; font-size: 12px; font-weight: 500; }.positive-text { color: #398b72 !important; }.negative-text { color: #b4675e !important; }
+.analytics-data-foot { display: flex; justify-content: space-between; padding: 10px 22px 14px; border-top: 1px solid #eef1ef; color: #9da7a3; font-size: 9px; }.analytics-data-foot span:last-child { font-family: "DM Mono"; font-size: 8px; }
+@media (max-width: 760px) { .analytics-data-kpis { grid-template-columns: repeat(2, 1fr); } .analytics-data-foot { display: block; line-height: 1.8; } }

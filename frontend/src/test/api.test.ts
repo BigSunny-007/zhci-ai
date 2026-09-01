@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { clearSession, getRecommendations, loadSession, login, refreshSession, saveSession } from "../api";
+import { clearSession, getAnalyticsOverview, getRecommendations, loadSession, login, refreshSession, saveSession } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -34,5 +34,13 @@ describe("API 会话客户端", () => {
     ));
     await expect(getRecommendations("access-token", 5)).resolves.toEqual([]);
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/market/recommendations?limit=5"), expect.anything());
+  });
+
+  it("读取带来源状态的绩效概览", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data_status: "demo" }), { status: 200 }),
+    ));
+    await expect(getAnalyticsOverview("access-token")).resolves.toEqual({ data_status: "demo" });
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/analytics/overview"), expect.anything());
   });
 });

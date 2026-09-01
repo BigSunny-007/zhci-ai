@@ -40,6 +40,19 @@ export type RecommendationHistoryItem = Recommendation & {
   realized_return?: number | null;
 };
 
+export type AnalyticsOverview = {
+  period: string;
+  portfolio_return: number;
+  benchmark_return: number;
+  excess_return: number;
+  max_drawdown: number;
+  win_rate: number;
+  profit_loss_ratio: number;
+  recommendation_accuracy: number;
+  data_status: string;
+  series: Array<{ date: string; portfolio: number; benchmark: number }>;
+};
+
 export type WatchlistItem = {
   id: string;
   symbol: string;
@@ -220,6 +233,10 @@ export function getRecommendation(
 
 export function getRecommendations(token: string, limit = 12): Promise<RecommendationHistoryItem[]> {
   return request<RecommendationHistoryItem[]>(`/market/recommendations?limit=${limit}`, {}, token);
+}
+
+export function getAnalyticsOverview(token: string): Promise<AnalyticsOverview> {
+  return request<AnalyticsOverview>("/analytics/overview", {}, token);
 }
 
 export function getWatchlist(token: string): Promise<WatchlistItem[]> {

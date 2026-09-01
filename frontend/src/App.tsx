@@ -10,9 +10,11 @@ import NewsPanel from "./NewsPanel";
 import RiskProfilePanel from "./RiskProfilePanel";
 import EvidenceDrawer from "./EvidenceDrawer";
 import RecommendationTimeline from "./RecommendationTimeline";
+import AnalyticsPanel from "./AnalyticsPanel";
 import "./freshness.css";
 import "./evidence.css";
 import "./timeline.css";
+import "./analytics-data.css";
 import { addWatchlist, ApiError, clearSession, getMarketSession, getMe, getQuote, getRecommendation, getWatchlist, loadSession, logout, refreshSession, saveSession, TokenSession, UserProfile, MarketQuote, Recommendation, MarketSession } from "./api";
 
 type WatchItem = { symbol: string; name: string; price: string; change: string; percent: string; inflow: string; status: "up" | "down" };
@@ -190,6 +192,7 @@ function App() {
         <HoldingsPanel token={session?.accessToken ?? null} />
         <RiskProfilePanel token={session?.accessToken ?? null} profile={profile} onProfileUpdated={setProfile} />
         <RecommendationTimeline token={session?.accessToken ?? null} />
+        <AnalyticsPanel token={session?.accessToken ?? null} />
         {evidenceOpen && <EvidenceDrawer recommendation={liveRecommendation} quote={liveQuote} onClose={() => setEvidenceOpen(false)} />}
         <section className="disclaimer"><ShieldCheck size={16}/><span>智策 AI 仅提供数据整理与投研辅助，不构成任何投资建议。市场有风险，投资需谨慎。</span><a href="#risk">了解数据与模型边界</a></section>
       </div>

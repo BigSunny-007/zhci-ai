@@ -53,6 +53,7 @@ export default function AlertsPanel({ token, symbol }: AlertsPanelProps) {
     try {
       const result = await checkAlerts(token);
       setTriggers((current) => [...result.triggers, ...current].slice(0, 8));
+      setAlerts((current) => current.map((alert) => result.triggers.some((trigger) => trigger.alert_id === alert.id) && alert.frequency === "once" ? { ...alert, is_active: false } : alert));
       setState("idle");
     } catch {
       setState("error");

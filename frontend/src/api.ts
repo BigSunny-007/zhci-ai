@@ -97,6 +97,18 @@ export type SchedulerStatus = {
   timezone: string;
 };
 
+export type Alert = {
+  id: string;
+  symbol: string;
+  condition_type: "price_above" | "price_below" | "inflow_above" | "change_percent_above";
+  threshold: number;
+  frequency: "once" | "hourly" | "daily";
+  expires_at?: string | null;
+  message: string;
+  channel: "in_app" | "email";
+  is_active: boolean;
+};
+
 export type WatchlistItem = {
   id: string;
   symbol: string;
@@ -297,6 +309,20 @@ export function getAuditIntegrity(token: string): Promise<AuditIntegrityReport> 
 
 export function getSchedulerStatus(token: string): Promise<SchedulerStatus> {
   return request<SchedulerStatus>("/admin/scheduler", {}, token);
+}
+
+export function getAlerts(token: string): Promise<Alert[]> {
+  return request<Alert[]>("/alerts", {}, token);
+}
+
+export function createAlert(
+  token: string,
+  alert: Pick<Alert, "symbol" | "condition_type" | "threshold" | "frequency" | "message" | "channel">,
+): Promise<Alert> {
+  return request<Alert>("/alerts", {
+    method: "POST",
+    body: JSON.stringify(alert),
+  }, token);
 }
 
 export function getWatchlist(token: string): Promise<WatchlistItem[]> {

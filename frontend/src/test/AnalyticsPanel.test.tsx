@@ -19,4 +19,14 @@ describe("数据化复盘面板", () => {
     expect(screen.getByText("中期 · 1–3月")).toBeTruthy();
     expect(screen.getAllByText("1 个样本")).toHaveLength(3);
   });
+
+  it("总览紧凑卡片只展示接口返回的真实指标", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ period: "近30日组合", data_status: "来自账户接口", portfolio_return: 0.12, excess_return: 0.03, max_drawdown: -0.05, profit_loss_ratio: 1.6, recommendation_accuracy: 0.8, series: [] }), { status: 200 })));
+    render(<AnalyticsPanel token="user-token" compact />);
+    expect(await screen.findByText("+12.00%")).toBeTruthy();
+    expect(screen.getByText("+3.00%")).toBeTruthy();
+    expect(screen.getByText("-5.00%")).toBeTruthy();
+    expect(screen.getByText("1.60")).toBeTruthy();
+    expect(screen.queryByText("+8.42%")).toBeNull();
+  });
 });

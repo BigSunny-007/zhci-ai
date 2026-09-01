@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditIntegrity, getDataProviders, getModelPolicies, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, saveSession, updateAlert } from "../api";
+import { clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataProviders, getModelPolicies, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, saveSession, updateAlert } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -80,6 +80,12 @@ describe("API 会话客户端", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([{ name: "demo", configured: true }]), { status: 200 })));
     await expect(getDataProviders("admin-token")).resolves.toEqual([{ name: "demo", configured: true }]);
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/admin/data-providers"), expect.anything());
+  });
+
+  it("读取审计操作摘要", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([{ event_id: "e1", action: "alert.created" }]), { status: 200 })));
+    await expect(getAuditEvents("admin-token", 8)).resolves.toEqual([{ event_id: "e1", action: "alert.created" }]);
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/admin/audit-events?limit=8"), expect.anything());
   });
 
   it("读取、创建并管理站内提醒", async () => {

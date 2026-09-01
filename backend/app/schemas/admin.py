@@ -44,3 +44,10 @@ class AuditIntegrityReport(BaseModel):
     unverifiable_events: int
     checked_at: datetime
     data_scope: str
+
+
+class AuditEventSummary(BaseModel):
+    event_id: str
+    action: str
+    resource_type: str
+    created_at: datetime

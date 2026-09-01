@@ -89,6 +89,13 @@ export type AuditIntegrityReport = {
   data_scope: string;
 };
 
+export type AuditEventSummary = {
+  event_id: string;
+  action: string;
+  resource_type: string;
+  created_at: string;
+};
+
 export type SchedulerStatus = {
   enabled: boolean;
   running: boolean;
@@ -315,6 +322,10 @@ export function getModelPolicies(token: string): Promise<ModelPolicy[]> {
 
 export function getAuditIntegrity(token: string): Promise<AuditIntegrityReport> {
   return request<AuditIntegrityReport>("/admin/audit-integrity", {}, token);
+}
+
+export function getAuditEvents(token: string, limit = 20): Promise<AuditEventSummary[]> {
+  return request<AuditEventSummary[]>(`/admin/audit-events?limit=${limit}`, {}, token);
 }
 
 export function getSchedulerStatus(token: string): Promise<SchedulerStatus> {

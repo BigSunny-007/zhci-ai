@@ -42,6 +42,16 @@ async def create_alert(
         raise HTTPException(status_code=409, detail="相同提醒已存在")
     row = Alert(user_id=user.id, symbol=symbol, **payload.model_dump())
     db.add(row)
+    db.add(
+        AuditLog(
+            actor_user_id=user.id,
+            action="alert.created",
+            resource_type="alert",
+            resource_id=symbol,
+            metadata_json={"condition_type": payload.condition_type, "frequency": payload.frequency},
+            created_at=datetime.now(UTC),
+        )
+    )
     await db.commit()
     await db.refresh(row)
     return AlertResponse.model_validate(row)

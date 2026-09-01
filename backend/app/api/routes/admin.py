@@ -11,6 +11,7 @@ from app.db.session import get_db
 from app.models import AIModelPolicy, AuditLog, User, calculate_audit_integrity_hash
 from app.schemas.admin import (
     AdminOverview,
+    AuditEventSummary,
     AuditIntegrityReport,
     DataProviderStatus,
     SchedulerStatus,
@@ -84,6 +85,27 @@ async def audit_integrity(
         checked_at=datetime.now(UTC),
         data_scope="最近 2000 条审计事件；旧事件可能没有完整性签名",
     )
+
+
+@router.get("/audit-events", response_model=list[AuditEventSummary])
+async def audit_events(
+    limit: int = 20,
+    _: User = Depends(admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[AuditEventSummary]:
+    safe_limit = min(max(limit, 1), 100)
+    events = (
+        await db.scalars(select(AuditLog).order_by(AuditLog.created_at.desc()).limit(safe_limit))
+    ).all()
+    return [
+        AuditEventSummary(
+            event_id=str(event.event_id),
+            action=event.action,
+            resource_type=event.resource_type,
+            created_at=event.created_at,
+        )
+        for event in events
+    ]
 
 
 @router.get("/model-policies", response_model=list[ModelPolicyResponse])

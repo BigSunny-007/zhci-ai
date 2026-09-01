@@ -14,11 +14,13 @@ from app.schemas.common import (
     HoldingCreate,
     HoldingResponse,
     HoldingUpdate,
+    PortfolioRiskOverview,
     PortfolioSummary,
     WatchlistCreate,
     WatchlistResponse,
 )
 from app.services.data.provider import get_market_provider
+from app.services.portfolio_risk import RiskPosition, summarize_portfolio_risk
 
 router = APIRouter(prefix="/portfolio", tags=["组合"])
 
@@ -57,6 +59,45 @@ async def portfolio_summary(
         data_status=status_text,
         source=provider_name,
         as_of=datetime.now(UTC),
+    )
+
+
+@router.get("/risk", response_model=PortfolioRiskOverview)
+async def portfolio_risk(
+    user: User = Depends(current_user), db: AsyncSession = Depends(get_db)
+) -> PortfolioRiskOverview:
+    holdings = (await db.scalars(select(Holding).where(Holding.user_id == user.id))).all()
+    provider_name = get_settings().market_data_provider
+    provider = get_market_provider(provider_name)
+    positions: list[RiskPosition] = []
+    for holding in holdings:
+        try:
+            quote = await provider.quote(holding.symbol, holding.name)
+            positions.append(
+                RiskPosition(
+                    symbol=holding.symbol,
+                    name=holding.name,
+                    quantity=holding.quantity,
+                    cost_price=holding.cost_price,
+                    market_price=quote.price,
+                    source=quote.source,
+                    as_of=quote.as_of,
+                )
+            )
+        except Exception:
+            positions.append(
+                RiskPosition(
+                    symbol=holding.symbol,
+                    name=holding.name,
+                    quantity=holding.quantity,
+                    cost_price=holding.cost_price,
+                    market_price=None,
+                    source=provider_name,
+                    as_of=None,
+                )
+            )
+    return PortfolioRiskOverview.model_validate(
+        summarize_portfolio_risk(positions, risk_profile=user.risk_profile)
     )
 
 

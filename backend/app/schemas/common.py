@@ -99,6 +99,31 @@ class PortfolioSummary(BaseModel):
     as_of: datetime
 
 
+class PortfolioRiskPosition(BaseModel):
+    symbol: str
+    name: str
+    market_value: Decimal
+    weight: Decimal
+    unrealized_pnl: Decimal | None
+    quote_status: Literal["valued", "unavailable"]
+    source: str
+    as_of: datetime | None = None
+
+
+class PortfolioRiskOverview(BaseModel):
+    risk_profile: str
+    single_position_limit: Decimal
+    market_value: Decimal
+    total_positions: int
+    valued_positions: int
+    top_position_weight: Decimal
+    concentration_index: Decimal
+    concentration_level: Literal["empty", "balanced", "watch", "high", "unavailable"]
+    data_status: str
+    as_of: datetime
+    positions: list[PortfolioRiskPosition]
+
+
 class WatchlistCreate(BaseModel):
     symbol: str = Field(min_length=2, max_length=24)
     name: str = Field(min_length=1, max_length=80)

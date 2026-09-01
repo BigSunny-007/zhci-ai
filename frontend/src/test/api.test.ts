@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { changePassword, clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getHistory, getMarketIndex, getModelPolicies, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, resendVerification, saveSession, updateAlert } from "../api";
+import { changePassword, clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getHistory, getMarketIndex, getModelPolicies, getPortfolioRisk, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, resendVerification, saveSession, updateAlert } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -99,6 +99,13 @@ describe("API 会话客户端", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ market_value: 100, unrealized_pnl: 5 }), { status: 200 })));
     await expect(getPortfolioSummary("user-token")).resolves.toEqual({ market_value: 100, unrealized_pnl: 5 });
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/portfolio/summary"), expect.anything());
+  });
+
+  it("读取组合风险预算与持仓权重", async () => {
+    const risk = { concentration_level: "watch", top_position_weight: 0.32, positions: [] };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(risk), { status: 200 })));
+    await expect(getPortfolioRisk("user-token")).resolves.toEqual(risk);
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/portfolio/risk"), expect.anything());
   });
 
   it("导出当前账号投研数据", async () => {

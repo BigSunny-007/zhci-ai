@@ -178,6 +178,31 @@ export type PortfolioSummary = {
   as_of: string;
 };
 
+export type PortfolioRiskPosition = {
+  symbol: string;
+  name: string;
+  market_value: number;
+  weight: number;
+  unrealized_pnl: number | null;
+  quote_status: "valued" | "unavailable";
+  source: string;
+  as_of?: string | null;
+};
+
+export type PortfolioRiskOverview = {
+  risk_profile: string;
+  single_position_limit: number;
+  market_value: number;
+  total_positions: number;
+  valued_positions: number;
+  top_position_weight: number;
+  concentration_index: number;
+  concentration_level: "empty" | "balanced" | "watch" | "high" | "unavailable";
+  data_status: string;
+  as_of: string;
+  positions: PortfolioRiskPosition[];
+};
+
 export type UserDataExport = {
   exported_at: string;
   user: UserProfile;
@@ -457,6 +482,10 @@ export function getHoldings(token: string): Promise<HoldingItem[]> {
 
 export function getPortfolioSummary(token: string): Promise<PortfolioSummary> {
   return request<PortfolioSummary>("/portfolio/summary", {}, token);
+}
+
+export function getPortfolioRisk(token: string): Promise<PortfolioRiskOverview> {
+  return request<PortfolioRiskOverview>("/portfolio/risk", {}, token);
 }
 
 export function getDataExport(token: string): Promise<UserDataExport> {

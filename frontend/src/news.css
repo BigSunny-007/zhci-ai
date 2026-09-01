@@ -1,3 +1,4 @@
 .news-content { min-width:0; flex:1; }.news-item > a { display:grid; place-items:center; color:#a6afab; }.authority { margin-left:8px; color:#a6afab; }
 .news-refresh { color:#a87845; font-size:18px; }.news-refresh:disabled { opacity:.5; cursor:default; }
 .stale-notice { margin:0 22px 12px; padding:7px 9px; border-radius:5px; color:#866d4d; background:#fbf3e7; font-size:9px; }
+.news-empty { margin:18px 22px 22px; padding:14px 12px; border:1px dashed #e3e8e5; border-radius:7px; color:#89918d; font-size:10px; line-height:1.6; }

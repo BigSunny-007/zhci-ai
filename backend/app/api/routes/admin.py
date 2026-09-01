@@ -1,8 +1,8 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import admin_user
@@ -14,6 +14,7 @@ from app.schemas.admin import (
     AuditEventSummary,
     AuditIntegrityReport,
     DataProviderHealth,
+    DataProviderHealthHistory,
     DataProviderStatus,
     SchedulerStatus,
 )
@@ -31,7 +32,11 @@ from app.services.policy import (
     list_policy_approvals,
     transition_policy,
 )
-from app.services.provider_health import probe_configured_providers
+from app.services.provider_health import (
+    health_event_metadata,
+    health_result_from_event,
+    probe_configured_providers,
+)
 from app.services.scheduler import recommendation_scheduler
 
 router = APIRouter(prefix="/admin", tags=["管理员"])
@@ -64,13 +69,51 @@ async def data_providers(_: User = Depends(admin_user)) -> list[DataProviderStat
 
 
 @router.get("/data-providers/health", response_model=list[DataProviderHealth])
-async def data_provider_health(_: User = Depends(admin_user)) -> list[DataProviderHealth]:
+async def data_provider_health(
+    admin: User = Depends(admin_user), db: AsyncSession = Depends(get_db)
+) -> list[DataProviderHealth]:
     settings = get_settings()
     results = await probe_configured_providers(
         settings.market_data_provider,
         timeout_seconds=settings.provider_health_timeout_seconds,
     )
+    for result in results:
+        db.add(
+            AuditLog(
+                actor_user_id=admin.id,
+                action="provider.health_probe",
+                resource_type="market_provider",
+                resource_id=result["name"],
+                metadata_json=health_event_metadata(result),
+                created_at=result["checked_at"],
+            )
+        )
+    await db.commit()
     return [DataProviderHealth.model_validate(item) for item in results]
+
+
+@router.get("/data-providers/health/history", response_model=list[DataProviderHealthHistory])
+async def data_provider_health_history(
+    provider_name: str | None = Query(default=None, alias="provider", max_length=64),
+    limit: int = Query(default=30, ge=1, le=100),
+    _: User = Depends(admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[DataProviderHealthHistory]:
+    statement = select(AuditLog).where(AuditLog.action == "provider.health_probe")
+    if provider_name:
+        statement = statement.where(AuditLog.resource_id == provider_name)
+    events = (
+        await db.scalars(statement.order_by(desc(AuditLog.created_at)).limit(limit))
+    ).all()
+    return [
+        DataProviderHealthHistory.model_validate(
+            {
+                **health_result_from_event(event),
+                "event_id": str(event.event_id or event.id),
+            }
+        )
+        for event in events
+    ]
 
 
 @router.get("/audit-integrity", response_model=AuditIntegrityReport)

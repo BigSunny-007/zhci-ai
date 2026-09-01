@@ -152,6 +152,8 @@ export type DataProviderHealth = {
   checked_at: string;
 };
 
+export type DataProviderHealthHistory = DataProviderHealth & { event_id: string };
+
 export type Alert = {
   id: string;
   symbol: string;
@@ -476,6 +478,12 @@ export function getDataProviders(token: string): Promise<DataProviderStatus[]> {
 
 export function getDataProviderHealth(token: string): Promise<DataProviderHealth[]> {
   return request<DataProviderHealth[]>("/admin/data-providers/health", {}, token);
+}
+
+export function getDataProviderHealthHistory(token: string, provider?: string, limit = 30): Promise<DataProviderHealthHistory[]> {
+  const query = new URLSearchParams({ limit: String(limit) });
+  if (provider) query.set("provider", provider);
+  return request<DataProviderHealthHistory[]>(`/admin/data-providers/health/history?${query.toString()}`, {}, token);
 }
 
 export function getAlerts(token: string): Promise<Alert[]> {

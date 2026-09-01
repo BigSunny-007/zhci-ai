@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { addHolding, changePassword, checkAlerts, clearSession, createAlert, deleteAlert, getAdminOverview, getAlertTriggers, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviderHealth, getDataProviders, getHistory, getMarketIndex, getModelPolicies, getPortfolioRisk, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, resendVerification, saveSession, updateAlert } from "../api";
+import { addHolding, changePassword, checkAlerts, clearSession, createAlert, deleteAlert, getAdminOverview, getAlertTriggers, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviderHealth, getDataProviderHealthHistory, getDataProviders, getHistory, getMarketIndex, getModelPolicies, getPortfolioRisk, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, resendVerification, saveSession, updateAlert } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -87,6 +87,13 @@ describe("API 会话客户端", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(health), { status: 200 })));
     await expect(getDataProviderHealth("admin-token")).resolves.toEqual(health);
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/admin/data-providers/health"), expect.anything());
+  });
+
+  it("读取管理员数据源健康历史", async () => {
+    const history = [{ event_id: "e1", name: "demo", status: "demo", latency_ms: 2 }];
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(history), { status: 200 })));
+    await expect(getDataProviderHealthHistory("admin-token", "demo", 8)).resolves.toEqual(history);
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/admin/data-providers/health/history?limit=8&provider=demo"), expect.anything());
   });
 
   it("读取建议兑现评估", async () => {

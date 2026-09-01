@@ -52,6 +52,10 @@ class DataProviderHealth(BaseModel):
     checked_at: datetime
 
 
+class DataProviderHealthHistory(DataProviderHealth):
+    event_id: str
+
+
 class AuditIntegrityReport(BaseModel):
     checked_events: int
     valid_events: int

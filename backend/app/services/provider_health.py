@@ -10,6 +10,46 @@ def _utc(value: datetime) -> datetime:
     return value if value.tzinfo else value.replace(tzinfo=UTC)
 
 
+def health_event_metadata(result: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "provider": result["name"],
+        "kind": result["kind"],
+        "description": result["description"],
+        "configured": result["configured"],
+        "status": result["status"],
+        "latency_ms": result["latency_ms"],
+        "snapshot_as_of": (
+            result["snapshot_as_of"].isoformat() if result["snapshot_as_of"] else None
+        ),
+        "snapshot_age_seconds": result["snapshot_age_seconds"],
+        "source": result["source"],
+        "message": result["message"],
+        "checked_at": result["checked_at"].isoformat(),
+    }
+
+
+def health_result_from_event(event: Any) -> dict[str, Any]:
+    metadata = event.metadata_json or {}
+    checked_at = metadata.get("checked_at") or event.created_at
+    snapshot_as_of = metadata.get("snapshot_as_of")
+    status = metadata.get("status")
+    if status not in {"healthy", "demo", "timeout", "error", "unavailable"}:
+        status = "error"
+    return {
+        "name": metadata.get("provider") or event.resource_id or "unknown",
+        "kind": metadata.get("kind") or "未知",
+        "description": metadata.get("description") or "历史探测记录",
+        "configured": bool(metadata.get("configured", False)),
+        "status": status,
+        "latency_ms": metadata.get("latency_ms"),
+        "snapshot_as_of": snapshot_as_of,
+        "snapshot_age_seconds": metadata.get("snapshot_age_seconds"),
+        "source": metadata.get("source"),
+        "message": metadata.get("message") or "历史探测记录",
+        "checked_at": checked_at,
+    }
+
+
 async def probe_provider_health(
     provider_name: str,
     configured_name: str,

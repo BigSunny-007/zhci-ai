@@ -10,7 +10,12 @@ from app.services.data.provider import (
     market_provider_catalog,
     normalize_symbol,
 )
-from app.services.provider_health import probe_configured_providers, probe_provider_health
+from app.services.provider_health import (
+    health_event_metadata,
+    health_result_from_event,
+    probe_configured_providers,
+    probe_provider_health,
+)
 
 
 @pytest.mark.asyncio
@@ -77,3 +82,20 @@ async def test_provider_health_probe_marks_slow_upstream_as_timeout(monkeypatch)
     result = await probe_provider_health("slow", "slow", timeout_seconds=0.001)
     assert result["status"] == "timeout"
     assert result["latency_ms"] is not None
+
+
+@pytest.mark.asyncio
+async def test_provider_health_audit_metadata_round_trips_without_datetime_objects():
+    result = await probe_provider_health("demo", "demo")
+    metadata = health_event_metadata(result)
+    assert isinstance(metadata["checked_at"], str)
+    assert isinstance(metadata["snapshot_as_of"], str)
+    event = SimpleNamespace(
+        metadata_json=metadata,
+        resource_id="demo",
+        created_at=result["checked_at"],
+    )
+    restored = health_result_from_event(event)
+    assert restored["name"] == "demo"
+    assert restored["status"] == "demo"
+    assert restored["source"] == "demo"

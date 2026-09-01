@@ -20,6 +20,7 @@ import DataProvidersPanel from "./DataProvidersPanel";
 import DataExportPanel from "./DataExportPanel";
 import SecurityPanel from "./SecurityPanel";
 import HistoryPanel from "./HistoryPanel";
+import MarketIndexPanel from "./MarketIndexPanel";
 import "./freshness.css";
 import "./evidence.css";
 import "./timeline.css";
@@ -217,7 +218,6 @@ function App() {
     : quoteFreshness === "fresh"
       ? `行情快照正常 · ${Number.isFinite(quoteAge) ? Math.max(0, Math.round(quoteAge / 60)) : 0} 分钟前`
       : "演示行情 · 非实时";
-
   if (REQUIRE_AUTH && !session && !demoMode) {
     return <AuthView onAuthenticated={handleAuthenticated} onDemo={() => setDemoMode(true)} />;
   }
@@ -272,6 +272,7 @@ function App() {
         <DataExportPanel token={session?.accessToken ?? null} />
         <SecurityPanel token={session?.accessToken ?? null} onSessionInvalidated={handleLogout} />
         <HistoryPanel token={session?.accessToken ?? null} symbol={selected.symbol} />
+        <MarketIndexPanel token={session?.accessToken ?? null} />
         {evidenceOpen && <EvidenceDrawer recommendation={liveRecommendation} quote={liveQuote} onClose={() => setEvidenceOpen(false)} />}
         <section className="disclaimer"><ShieldCheck size={16}/><span>智策 AI 仅提供数据整理与投研辅助，不构成任何投资建议。市场有风险，投资需谨慎。</span><a href="#risk">了解数据与模型边界</a></section>
       </div>

@@ -14,6 +14,7 @@ def test_openapi_exposes_recommendation_history_contract():
     from app.main import app
 
     assert "/api/v1/market/recommendations" in app.openapi()["paths"]
+    assert "/api/v1/market/index" in app.openapi()["paths"]
 
 
 def test_verification_token_is_random_and_hash_is_not_reversible():

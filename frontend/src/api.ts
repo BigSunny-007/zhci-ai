@@ -22,6 +22,17 @@ export type MarketQuote = {
   fund_flow_status?: "available" | "unavailable" | "demo";
 };
 
+export type MarketIndexSnapshot = {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  change_percent: number;
+  source: string;
+  as_of: string;
+  data_status: "available" | "unavailable" | "demo";
+};
+
 export type Recommendation = {
   symbol: string;
   horizon: string;
@@ -330,6 +341,10 @@ export function refreshSession(refreshToken: string): Promise<TokenSession> {
 export function getQuote(token: string, symbol: string, name: string): Promise<MarketQuote> {
   const params = new URLSearchParams({ symbol, name });
   return request<MarketQuote>(`/market/quote?${params.toString()}`, {}, token);
+}
+
+export function getMarketIndex(token: string): Promise<MarketIndexSnapshot> {
+  return request<MarketIndexSnapshot>("/market/index", {}, token);
 }
 
 export function getHistory(token: string, symbol: string, days = 30): Promise<MarketHistoryPoint[]> {

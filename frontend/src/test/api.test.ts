@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { changePassword, clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getHistory, getModelPolicies, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, resendVerification, saveSession, updateAlert } from "../api";
+import { changePassword, clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getHistory, getMarketIndex, getModelPolicies, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, resendVerification, saveSession, updateAlert } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -123,6 +123,13 @@ describe("API 会话客户端", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(history), { status: 200 })));
     await expect(getHistory("user-token", "600519.SH", 30)).resolves.toEqual(history);
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/market/history?symbol=600519.SH&days=30"), expect.anything());
+  });
+
+  it("读取带来源和时间戳的大盘快照", async () => {
+    const index = { symbol: "000001.SH", name: "上证指数", price: 3387.42, change: 21.1, change_percent: 0.63, source: "demo", as_of: "2026-09-02T01:00:00Z", data_status: "demo" as const };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(index), { status: 200 })));
+    await expect(getMarketIndex("user-token")).resolves.toEqual(index);
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/market/index"), expect.objectContaining({ headers: expect.anything() }));
   });
 
   it("读取、创建并管理站内提醒", async () => {

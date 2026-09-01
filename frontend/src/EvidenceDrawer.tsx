@@ -28,6 +28,8 @@ export default function EvidenceDrawer({ recommendation, quote, onClose }: Evide
   const limit = asNumber(evidence.position_limit);
   const currentPosition = asNumber(evidence.current_position);
   const newsItems = Array.isArray(evidence.news) ? evidence.news : [];
+  const marketContext = (evidence.market_context ?? {}) as Record<string, unknown>;
+  const marketChange = asNumber(marketContext.change_percent);
 
   return (
     <div className="evidence-overlay" role="presentation" onClick={onClose}>
@@ -43,6 +45,7 @@ export default function EvidenceDrawer({ recommendation, quote, onClose }: Evide
           <section className="evidence-section"><h3>风险约束</h3><div className="evidence-grid"><div><span>风险档位</span><strong>{String(evidence.risk_profile ?? "未提供")}</strong></div><div><span>当前仓位</span><strong>{currentPosition === null ? "暂无数据" : `${(currentPosition * 100).toFixed(1)}%`}</strong></div><div><span>仓位上限</span><strong>{limit === null ? "暂无数据" : `${(limit * 100).toFixed(0)}%`}</strong></div><div><span>超配状态</span><strong className={evidence.risk_breach ? "warning" : ""}>{evidence.risk_breach ? "已超限" : "未超限"}</strong></div></div></section>
           <section className="evidence-section"><h3>数据质量</h3><div className="evidence-quality"><span className={freshness === "已过期" ? "warning-dot" : "ok-dot"}/><strong>{freshness}</strong><span>{age === null ? "快照年龄未知" : `快照年龄 ${Math.round(age / 60)} 分钟`}</span><span>阈值 {asNumber(evidence.quote_max_age_seconds) ?? "—"} 秒</span></div></section>
           <section className="evidence-section"><h3>相关新闻 <small>{newsItems.length} 条</small></h3>{newsItems.slice(0, 5).map((item, index) => { const news = item as Record<string, unknown>; return <div className="evidence-news" key={String(news.id ?? index)}><strong>{String(news.title ?? "未命名资讯")}</strong><span>{String(news.source_name ?? "未知来源")} · 权威度 {String(news.authority_score ?? "—")}</span></div>; })}</section>
+          <section className="evidence-section"><h3>大盘环境</h3><div className="evidence-grid"><div><span>指数</span><strong>{String(marketContext.name ?? "未取得快照")}</strong></div><div><span>涨跌幅</span><strong>{marketChange === null ? "暂无数据" : (marketChange >= 0 ? "+" : "") + marketChange.toFixed(2) + "%"}</strong></div><div><span>数据源</span><strong>{String(marketContext.source ?? "未提供")}</strong></div><div><span>上下文修正</span><strong>{String(evidence.market_context_adjustment ?? "0.00")}</strong></div></div></section>
           <p className="evidence-limit">{String((evidence.limitations as string[] | undefined)?.join("；") ?? "证据仅用于投研辅助，请独立判断")}</p>
         </div>
       </aside>

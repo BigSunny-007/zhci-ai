@@ -4,13 +4,14 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Protocol
 
-from app.schemas.common import MarketHistoryPoint, MarketQuote, NewsResponse
+from app.schemas.common import MarketHistoryPoint, MarketIndexSnapshot, MarketQuote, NewsResponse
 
 
 class MarketDataProvider(Protocol):
     name: str
 
     async def quote(self, symbol: str, name: str) -> MarketQuote: ...
+    async def market_index(self) -> MarketIndexSnapshot: ...
     async def history(self, symbol: str, days: int = 30) -> list[MarketHistoryPoint]: ...
     async def news(self, symbol: str | None = None) -> list[NewsResponse]: ...
 
@@ -39,6 +40,18 @@ class DemoMarketDataProvider:
             source=self.name,
             as_of=now,
             fund_flow_status="demo",
+        )
+
+    async def market_index(self) -> MarketIndexSnapshot:
+        return MarketIndexSnapshot(
+            symbol="000001.SH",
+            name="上证指数",
+            price=Decimal("3387.42"),
+            change=Decimal("21.10"),
+            change_percent=Decimal("0.63"),
+            source=self.name,
+            as_of=datetime.now(UTC),
+            data_status="demo",
         )
 
     async def history(self, symbol: str, days: int = 30) -> list[MarketHistoryPoint]:
@@ -110,6 +123,27 @@ class AkShareMarketDataProvider:
 
     async def quote(self, symbol: str, name: str) -> MarketQuote:
         return await asyncio.to_thread(self._quote_sync, symbol, name)
+
+    async def market_index(self) -> MarketIndexSnapshot:
+        return await asyncio.to_thread(self._market_index_sync)
+
+    def _market_index_sync(self) -> MarketIndexSnapshot:
+        ak = self._module()
+        frame = ak.stock_zh_index_spot_em()
+        matches = frame[frame["代码"].astype(str).str.zfill(6) == "000001"]
+        if matches.empty:
+            raise ValueError("未找到上证指数")
+        row = matches.iloc[0]
+        return MarketIndexSnapshot(
+            symbol="000001.SH",
+            name=str(row.get("名称") or "上证指数"),
+            price=self._decimal(row.get("最新价")),
+            change=self._decimal(row.get("涨跌额")),
+            change_percent=self._decimal(row.get("涨跌幅")),
+            source=self.name,
+            as_of=datetime.now(UTC),
+            data_status="available",
+        )
 
     def _quote_sync(self, symbol: str, name: str) -> MarketQuote:
         ak = self._module()

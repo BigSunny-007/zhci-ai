@@ -122,6 +122,17 @@ class MarketQuote(BaseModel):
     fund_flow_status: Literal["available", "unavailable", "demo"] = "available"
 
 
+class MarketIndexSnapshot(BaseModel):
+    symbol: str
+    name: str
+    price: Decimal
+    change: Decimal
+    change_percent: Decimal
+    source: str
+    as_of: datetime
+    data_status: Literal["available", "unavailable", "demo"] = "available"
+
+
 class MarketSessionResponse(BaseModel):
     as_of: datetime
     timezone: str

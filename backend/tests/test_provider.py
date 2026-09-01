@@ -1,8 +1,19 @@
+import pytest
+
 from app.services.data.provider import (
+    DemoMarketDataProvider,
     get_market_provider,
     market_provider_catalog,
     normalize_symbol,
 )
+
+
+@pytest.mark.asyncio
+async def test_demo_provider_exposes_a_timestamped_market_index():
+    snapshot = await DemoMarketDataProvider().market_index()
+    assert snapshot.symbol == "000001.SH"
+    assert snapshot.data_status == "demo"
+    assert snapshot.as_of.tzinfo is not None
 
 
 def test_symbol_normalization_supports_exchange_suffixes():

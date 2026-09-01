@@ -2,7 +2,12 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
-from app.schemas.common import MarketQuote, NewsResponse, RecommendationResponse
+from app.schemas.common import (
+    MarketIndexSnapshot,
+    MarketQuote,
+    NewsResponse,
+    RecommendationResponse,
+)
 from app.schemas.policy import PolicyWeights
 from app.services.policy import default_policy_weights, policy_weights_dict
 
@@ -11,6 +16,7 @@ RISK_POSITION_LIMITS = {
     "balanced": Decimal("0.20"),
     "aggressive": Decimal("0.35"),
 }
+MARKET_CONTEXT_ADJUSTMENT = Decimal("0.10")
 
 
 def risk_position_limit(risk_profile: str) -> Decimal:
@@ -27,6 +33,7 @@ def generate_recommendation(
     max_quote_age_seconds: int | None = 1800,
     weights: PolicyWeights | None = None,
     model_version: str = "rule-based-v1",
+    market_index: MarketIndexSnapshot | None = None,
 ) -> RecommendationResponse:
     selected_weights = weights or default_policy_weights()
     weight_values = policy_weights_dict(selected_weights)
@@ -39,11 +46,20 @@ def generate_recommendation(
     )
     momentum_signal = Decimal("1") if quote.change_percent >= 0 else Decimal("-1")
     news_signal = sum((item.sentiment_score * item.authority_score for item in news), Decimal("0"))
-    score = (
+    base_score = (
         inflow_signal * weight_values["fund_flow"]
         + momentum_signal * weight_values["momentum"]
         + news_signal * weight_values["news_authority_adjusted"]
     )
+    market_signal = (
+        Decimal("1")
+        if market_index and market_index.change_percent > 0
+        else Decimal("-1")
+        if market_index and market_index.change_percent < 0
+        else Decimal("0")
+    )
+    market_adjustment = market_signal * MARKET_CONTEXT_ADJUSTMENT
+    score = base_score + market_adjustment
     if score >= Decimal("0.35"):
         action = "买入观察"
     elif score <= Decimal("-0.35"):
@@ -77,6 +93,12 @@ def generate_recommendation(
             ),
             f"价格动量：涨跌幅 {quote.change_percent:.2f}%，权重 {selected_weights.momentum:.0%}",
             f"新闻加权情绪：{news_signal:.3f}，权重 {selected_weights.news_authority_adjusted:.0%}",
+            (
+                f"大盘环境：{market_index.name}涨跌幅 {market_index.change_percent:.2f}%，"
+                f"上下文修正 {market_adjustment:+.2f}"
+                if market_index
+                else "大盘环境：当前未取得指数快照，不参与评分"
+            ),
             f"风险档位：{risk_profile}，建议仓位上限 {position_limit:.0%}，当前占比 {current_position:.0%}",
             (
                 f"行情快照已延迟 {quote_age_seconds} 秒，超过 {max_quote_age_seconds} 秒阈值，"
@@ -96,6 +118,9 @@ def generate_recommendation(
         },
         "policy_version": model_version,
         "score": str(score),
+        "base_score": str(base_score),
+        "market_context": market_index.model_dump(mode="json") if market_index else None,
+        "market_context_adjustment": str(market_adjustment),
         "risk_profile": risk_profile,
         "position_limit": str(position_limit),
         "current_position": str(current_position),

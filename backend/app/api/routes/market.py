@@ -18,6 +18,7 @@ from app.db.session import get_db
 from app.models import AIRecommendation, Holding, User
 from app.schemas.common import (
     MarketHistoryPoint,
+    MarketIndexSnapshot,
     MarketProviderInfo,
     MarketQuote,
     MarketSessionResponse,
@@ -61,6 +62,12 @@ async def quote(
 ) -> MarketQuote:
     provider = get_market_provider(get_settings().market_data_provider)
     return await provider.quote(symbol.upper(), name)
+
+
+@router.get("/index", response_model=MarketIndexSnapshot)
+async def market_index(_: User = Depends(current_user)) -> MarketIndexSnapshot:
+    provider = get_market_provider(get_settings().market_data_provider)
+    return await provider.market_index()
 
 
 @router.get("/history", response_model=list[MarketHistoryPoint])
@@ -114,6 +121,10 @@ async def recommendation(
     provider = get_market_provider(get_settings().market_data_provider)
     quote_data = await provider.quote(symbol_upper, name)
     news_data = await provider.news(symbol_upper)
+    try:
+        market_index_data = await provider.market_index()
+    except Exception:
+        market_index_data = None
     active_policy = await get_active_policy(db)
     weights = (
         default_policy_weights()
@@ -144,6 +155,7 @@ async def recommendation(
         risk_profile=user.risk_profile,
         target_return_rate=user.target_return_rate,
         max_quote_age_seconds=get_settings().recommendation_quote_max_age_seconds,
+        market_index=market_index_data,
     )
     generated_at = generated.generated_at
     if generated_at.tzinfo is None:

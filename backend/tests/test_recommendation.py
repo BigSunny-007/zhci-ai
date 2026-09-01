@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
-from app.schemas.common import MarketQuote, NewsResponse
+from app.schemas.common import MarketIndexSnapshot, MarketQuote, NewsResponse
 from app.schemas.policy import PolicyWeights
 from app.services.recommendation import generate_recommendation
 
@@ -63,6 +63,23 @@ def test_custom_policy_is_frozen_into_recommendation_evidence():
     assert result.model_version == "policy-v13"
     assert result.evidence["policy_version"] == "policy-v13"
     assert result.evidence["weights"]["news_authority_adjusted"] == "60%"
+
+
+def test_market_index_is_frozen_into_recommendation_evidence():
+    index = MarketIndexSnapshot(
+        symbol="000001.SH",
+        name="上证指数",
+        price=Decimal("3387.42"),
+        change=Decimal("21.10"),
+        change_percent=Decimal("0.63"),
+        source="demo",
+        as_of=datetime.now(UTC),
+        data_status="demo",
+    )
+    result = generate_recommendation(quote("0", "0"), news("0"), market_index=index)
+    assert result.evidence["market_context"]["symbol"] == "000001.SH"
+    assert result.evidence["market_context_adjustment"] == "0.10"
+    assert "大盘环境：上证指数涨跌幅 0.63%" in result.rationale
 
 
 def test_risk_profile_caps_suggested_position():

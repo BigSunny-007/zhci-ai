@@ -44,6 +44,10 @@ async def run_recommendation_cycle() -> SchedulerRunResult:
     failed_count = 0
     settings = get_settings()
     provider = get_market_provider(settings.market_data_provider)
+    try:
+        market_index = await provider.market_index()
+    except Exception:
+        market_index = None
     async with SessionLocal() as db:
         users = (
             await db.scalars(
@@ -93,6 +97,7 @@ async def run_recommendation_cycle() -> SchedulerRunResult:
                         max_quote_age_seconds=settings.recommendation_quote_max_age_seconds,
                         weights=weights,
                         model_version=model_version,
+                        market_index=market_index,
                     )
                     generated_at = recommendation.generated_at
                     if generated_at.tzinfo is None:

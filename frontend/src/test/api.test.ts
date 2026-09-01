@@ -118,9 +118,10 @@ describe("API 会话客户端", () => {
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/auth/resend-verification"), expect.objectContaining({ method: "POST" }));
   });
 
-  it("读取历史行情", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([{ time: "2026-09-01T00:00:00Z", close: 10 }]), { status: 200 })));
-    await expect(getHistory("user-token", "600519.SH", 30)).resolves.toEqual([{ time: "2026-09-01T00:00:00Z", close: 10 }]);
+  it("读取历史行情及成交量字段", async () => {
+    const history = [{ time: "2026-09-01T00:00:00Z", close: 10, volume: 1200000, net_inflow: 35000 }];
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(history), { status: 200 })));
+    await expect(getHistory("user-token", "600519.SH", 30)).resolves.toEqual(history);
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/market/history?symbol=600519.SH&days=30"), expect.anything());
   });
 

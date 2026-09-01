@@ -25,6 +25,7 @@ import MarketIndexPanel from "./MarketIndexPanel";
 import MarketOverviewCards from "./MarketOverviewCards";
 import PortfolioValueCard from "./PortfolioValueCard";
 import PortfolioRiskPanel from "./PortfolioRiskPanel";
+import { notifySessionLogout, subscribeToSessionEvents } from "./sessionSync";
 import "./freshness.css";
 import "./evidence.css";
 import "./timeline.css";
@@ -93,6 +94,14 @@ function App() {
     setNotice(null);
     setSyncState("演示数据");
   };
+
+  useEffect(() => subscribeToSessionEvents((event) => {
+    if (event.type !== "logout") return;
+    clearAccountScopedState();
+    clearSession();
+    setSession(null);
+    if (REQUIRE_AUTH) setAuthVisible(true);
+  }), []);
 
   useEffect(() => {
     let active = true;
@@ -217,6 +226,7 @@ function App() {
     const activeSession = session;
     clearAccountScopedState();
     clearSession();
+    notifySessionLogout();
     setSession(null);
     if (REQUIRE_AUTH) setAuthVisible(true);
     if (activeSession) void logout(activeSession.accessToken).catch(() => undefined);

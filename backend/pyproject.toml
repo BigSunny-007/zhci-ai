@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "zhice-api"
-version = "74.0.0"
+version = "75.0.0"
 description = "Zhice AI market intelligence API"
 requires-python = ">=3.12"
 dependencies = [

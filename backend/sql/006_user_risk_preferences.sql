@@ -1,0 +1,5 @@
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS target_return_rate DECIMAL(8,4) NULL;
+
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS investment_horizon VARCHAR(16) NOT NULL DEFAULT '1-5d';

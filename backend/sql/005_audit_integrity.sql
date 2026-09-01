@@ -1,0 +1,5 @@
+ALTER TABLE audit_logs
+  ADD COLUMN IF NOT EXISTS integrity_hash CHAR(64) NULL;
+
+ALTER TABLE audit_logs
+  ADD COLUMN IF NOT EXISTS event_id CHAR(36) NULL;

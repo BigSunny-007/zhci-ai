@@ -1,0 +1,2 @@
+.news-content { min-width:0; flex:1; }.news-item > a { display:grid; place-items:center; color:#a6afab; }.authority { margin-left:8px; color:#a6afab; }
+.stale-notice { margin:0 22px 12px; padding:7px 9px; border-radius:5px; color:#866d4d; background:#fbf3e7; font-size:9px; }

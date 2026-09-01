@@ -78,6 +78,22 @@ function App() {
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const filtered = useMemo(() => watchlist.filter((item) => `${item.symbol}${item.name}`.includes(searchValue)), [watchlist, searchValue]);
 
+  const clearAccountScopedState = () => {
+    setProfile(null);
+    setLiveQuote(null);
+    setLiveRecommendation(null);
+    setMarketIndex(null);
+    setPortfolioSummary(null);
+    setWatchlist(baseWatchlist);
+    setSelected(baseWatchlist[0]);
+    setSearchValue("");
+    setRecommendationUnavailable(false);
+    setRecommendationBusy(false);
+    setEvidenceOpen(false);
+    setNotice(null);
+    setSyncState("演示数据");
+  };
+
   useEffect(() => {
     let active = true;
     getMarketSession().then((next) => {
@@ -104,12 +120,18 @@ function App() {
 
   useEffect(() => {
     if (!session) return;
-    getMe(session.accessToken).then(setProfile).catch((error) => {
+    let active = true;
+    getMe(session.accessToken).then((nextProfile) => {
+      if (active) setProfile(nextProfile);
+    }).catch((error) => {
+      if (!active) return;
       if (error instanceof ApiError && error.status === 401) {
         refreshSession(session.refreshToken).then((nextSession) => {
+          if (!active) return;
           saveSession(nextSession);
           setSession(nextSession);
         }).catch(() => {
+          if (!active) return;
           clearSession();
           setSession(null);
           setProfile(null);
@@ -122,6 +144,7 @@ function App() {
       setProfile(null);
       if (REQUIRE_AUTH) setAuthVisible(true);
     });
+    return () => { active = false; };
   }, [session]);
 
   useEffect(() => {
@@ -169,7 +192,9 @@ function App() {
 
   useEffect(() => {
     if (!session) return;
+    let active = true;
     getWatchlist(session.accessToken).then((items) => {
+      if (!active) return;
       if (!items.length) return;
       const mapped = items.map((item) => {
         const cached = baseWatchlist.find((candidate) => candidate.symbol === item.symbol);
@@ -177,10 +202,12 @@ function App() {
       });
       setWatchlist(mapped);
       setSelected((current) => mapped.find((item) => item.symbol === current.symbol) ?? mapped[0]);
-    }).catch(() => setSyncState("自选同步失败 · 保留本地列表"));
+    }).catch(() => { if (active) setSyncState("自选同步失败 · 保留本地列表"); });
+    return () => { active = false; };
   }, [session]);
 
   const handleAuthenticated = (nextSession: TokenSession) => {
+    clearAccountScopedState();
     setSession(nextSession);
     setDemoMode(false);
     setAuthVisible(false);
@@ -188,9 +215,9 @@ function App() {
 
   const handleLogout = () => {
     const activeSession = session;
+    clearAccountScopedState();
     clearSession();
     setSession(null);
-    setProfile(null);
     if (REQUIRE_AUTH) setAuthVisible(true);
     if (activeSession) void logout(activeSession.accessToken).catch(() => undefined);
   };

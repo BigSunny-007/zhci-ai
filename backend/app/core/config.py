@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     market_data_provider: str = "demo"
     ai_provider: str = "rule_based"
     recommendation_quote_max_age_seconds: int = 1800
+    provider_health_timeout_seconds: float = Field(default=3.0, gt=0, le=30)
     openai_compat_base_url: str = ""
     openai_compat_api_key: str = ""
     openai_compat_model: str = ""

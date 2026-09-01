@@ -13,6 +13,7 @@ from app.schemas.admin import (
     AdminOverview,
     AuditEventSummary,
     AuditIntegrityReport,
+    DataProviderHealth,
     DataProviderStatus,
     SchedulerStatus,
 )
@@ -30,6 +31,7 @@ from app.services.policy import (
     list_policy_approvals,
     transition_policy,
 )
+from app.services.provider_health import probe_configured_providers
 from app.services.scheduler import recommendation_scheduler
 
 router = APIRouter(prefix="/admin", tags=["管理员"])
@@ -59,6 +61,16 @@ async def scheduler_status(_: User = Depends(admin_user)) -> SchedulerStatus:
 async def data_providers(_: User = Depends(admin_user)) -> list[DataProviderStatus]:
     configured = get_settings().market_data_provider
     return [DataProviderStatus.model_validate(item) for item in market_provider_catalog(configured)]
+
+
+@router.get("/data-providers/health", response_model=list[DataProviderHealth])
+async def data_provider_health(_: User = Depends(admin_user)) -> list[DataProviderHealth]:
+    settings = get_settings()
+    results = await probe_configured_providers(
+        settings.market_data_provider,
+        timeout_seconds=settings.provider_health_timeout_seconds,
+    )
+    return [DataProviderHealth.model_validate(item) for item in results]
 
 
 @router.get("/audit-integrity", response_model=AuditIntegrityReport)

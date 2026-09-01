@@ -138,6 +138,20 @@ export type DataProviderStatus = {
   source_url: string | null;
 };
 
+export type DataProviderHealth = {
+  name: string;
+  kind: string;
+  description: string;
+  configured: boolean;
+  status: "healthy" | "demo" | "timeout" | "error" | "unavailable";
+  latency_ms: number | null;
+  snapshot_as_of: string | null;
+  snapshot_age_seconds: number | null;
+  source: string | null;
+  message: string;
+  checked_at: string;
+};
+
 export type Alert = {
   id: string;
   symbol: string;
@@ -458,6 +472,10 @@ export function getSchedulerStatus(token: string): Promise<SchedulerStatus> {
 
 export function getDataProviders(token: string): Promise<DataProviderStatus[]> {
   return request<DataProviderStatus[]>("/admin/data-providers", {}, token);
+}
+
+export function getDataProviderHealth(token: string): Promise<DataProviderHealth[]> {
+  return request<DataProviderHealth[]>("/admin/data-providers/health", {}, token);
 }
 
 export function getAlerts(token: string): Promise<Alert[]> {

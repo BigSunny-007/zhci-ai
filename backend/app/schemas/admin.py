@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -35,6 +36,20 @@ class DataProviderStatus(BaseModel):
     description: str
     limitations: list[str]
     source_url: str | None
+
+
+class DataProviderHealth(BaseModel):
+    name: str
+    kind: str
+    description: str
+    configured: bool
+    status: Literal["healthy", "demo", "timeout", "error", "unavailable"]
+    latency_ms: int | None
+    snapshot_as_of: datetime | None
+    snapshot_age_seconds: int | None
+    source: str | None
+    message: str
+    checked_at: datetime
 
 
 class AuditIntegrityReport(BaseModel):

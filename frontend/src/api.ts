@@ -19,6 +19,7 @@ export type MarketQuote = {
   net_inflow: number;
   source: string;
   as_of: string;
+  fund_flow_status?: "available" | "unavailable" | "demo";
 };
 
 export type Recommendation = {

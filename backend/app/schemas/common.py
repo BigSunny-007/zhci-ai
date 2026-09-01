@@ -119,6 +119,7 @@ class MarketQuote(BaseModel):
     net_inflow: Decimal
     source: str
     as_of: datetime
+    fund_flow_status: Literal["available", "unavailable", "demo"] = "available"
 
 
 class MarketSessionResponse(BaseModel):

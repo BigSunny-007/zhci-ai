@@ -30,7 +30,13 @@ def generate_recommendation(
 ) -> RecommendationResponse:
     selected_weights = weights or default_policy_weights()
     weight_values = policy_weights_dict(selected_weights)
-    inflow_signal = Decimal("1") if quote.net_inflow > 0 else Decimal("-1")
+    inflow_signal = (
+        Decimal("1")
+        if quote.net_inflow > 0
+        else Decimal("-1")
+        if quote.net_inflow < 0
+        else Decimal("0")
+    )
     momentum_signal = Decimal("1") if quote.change_percent >= 0 else Decimal("-1")
     news_signal = sum((item.sentiment_score * item.authority_score for item in news), Decimal("0"))
     score = (
@@ -64,7 +70,11 @@ def generate_recommendation(
     )
     rationale = "；".join(
         [
-            f"资金流：净流入 {quote.net_inflow:,.0f}，权重 {selected_weights.fund_flow:.0%}",
+            (
+                f"资金流：净流入 {quote.net_inflow:,.0f}，权重 {selected_weights.fund_flow:.0%}"
+                if quote.fund_flow_status != "unavailable"
+                else "资金流：当前数据源未提供，资金流信号不参与本次评分"
+            ),
             f"价格动量：涨跌幅 {quote.change_percent:.2f}%，权重 {selected_weights.momentum:.0%}",
             f"新闻加权情绪：{news_signal:.3f}，权重 {selected_weights.news_authority_adjusted:.0%}",
             f"风险档位：{risk_profile}，建议仓位上限 {position_limit:.0%}，当前占比 {current_position:.0%}",
@@ -92,6 +102,7 @@ def generate_recommendation(
         "risk_breach": risk_breach,
         "quote_age_seconds": quote_age_seconds,
         "quote_freshness": "stale" if stale_quote else "fresh",
+        "fund_flow_status": quote.fund_flow_status,
         "quote_max_age_seconds": max_quote_age_seconds,
         "target_return_rate": str(target_return_rate) if target_return_rate is not None else None,
         "limitations": ["演示数据源", "未接入真实实时行情", "不得直接用于投资决策"],

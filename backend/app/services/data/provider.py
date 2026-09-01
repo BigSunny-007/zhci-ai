@@ -38,6 +38,7 @@ class DemoMarketDataProvider:
             net_inflow=Decimal(str((seed - 48) * 130000)),
             source=self.name,
             as_of=now,
+            fund_flow_status="demo",
         )
 
     async def history(self, symbol: str, days: int = 30) -> list[MarketHistoryPoint]:
@@ -130,6 +131,7 @@ class AkShareMarketDataProvider:
             net_inflow=Decimal("0"),
             source=self.name,
             as_of=datetime.now(UTC),
+            fund_flow_status="unavailable",
         )
 
     async def history(self, symbol: str, days: int = 30) -> list[MarketHistoryPoint]:

@@ -83,8 +83,9 @@ describe("API 会话客户端", () => {
   });
 
   it("读取建议兑现评估", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ evaluated_count: 2, recommendation_accuracy: 0.5 }), { status: 200 })));
-    await expect(getRecommendationEvaluation("user-token")).resolves.toEqual({ evaluated_count: 2, recommendation_accuracy: 0.5 });
+    const byHorizon = [{ horizon: "1-2d", evaluated_count: 2, win_rate: 0.5, max_drawdown: -0.1, profit_loss_ratio: 1.4, recommendation_accuracy: 0.5 }];
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ evaluated_count: 2, recommendation_accuracy: 0.5, by_horizon: byHorizon }), { status: 200 })));
+    await expect(getRecommendationEvaluation("user-token")).resolves.toEqual({ evaluated_count: 2, recommendation_accuracy: 0.5, by_horizon: byHorizon });
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/analytics/recommendations"), expect.anything());
   });
 

@@ -4,6 +4,7 @@ from decimal import Decimal
 from app.services.evaluation import (
     evaluate_recommendation,
     is_mature,
+    summarize_by_horizon,
     summarize_outcomes,
 )
 
@@ -61,3 +62,19 @@ def test_maturity_respects_horizon():
     generated_at = datetime(2026, 9, 1, tzinfo=UTC)
     assert not is_mature(generated_at, generated_at + timedelta(days=4), "1-5d")
     assert is_mature(generated_at, generated_at + timedelta(days=5), "1-5d")
+
+
+def test_summary_can_be_split_by_horizon_without_losing_metrics():
+    generated_at = datetime(2026, 9, 1, tzinfo=UTC)
+    outcome = evaluate_recommendation(
+        symbol="A",
+        action="买入观察",
+        evidence={"quote": {"price": "100"}},
+        generated_at=generated_at,
+        exit_price=Decimal("110"),
+        evaluated_at=generated_at + timedelta(days=2),
+    )
+    summary = summarize_by_horizon({"1-2d": [outcome] if outcome else []})
+    assert summary[0]["horizon"] == "1-2d"
+    assert summary[0]["evaluated_count"] == 1
+    assert summary[0]["win_rate"] == Decimal("1.0000")

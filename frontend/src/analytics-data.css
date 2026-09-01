@@ -6,3 +6,12 @@
 .evaluation-strip { display: flex; gap: 16px; margin: 0 22px 12px; padding: 8px 10px; border: 1px solid #eee8df; border-radius: 6px; background: #fbf8f3; color: #9da7a3; font-size: 9px; }.evaluation-strip strong { margin-left: 3px; color: #68746f; font-family: "DM Mono"; font-weight: 500; }.evaluation-strip span:last-child { margin-left: auto; }
 .evaluation-chart { margin: 0 22px 13px; padding: 9px 10px 7px; border: 1px solid #f0ece5; border-radius: 6px; }.evaluation-chart > div { display: flex; justify-content: space-between; color: #89948f; font-size: 9px; }.evaluation-chart small { color: #adb5b1; font-size: 8px; }.evaluation-chart svg { display: block; width: 100%; height: 52px; margin-top: 7px; background: linear-gradient(to bottom, transparent 49%, #f1eee9 50%, transparent 51%); }
 @media (max-width: 760px) { .analytics-data-kpis { grid-template-columns: repeat(2, 1fr); } .analytics-data-foot { display: block; line-height: 1.8; } }
+.horizon-breakdown { margin: 0 22px 13px; }
+.horizon-breakdown-title { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; color: #68746f; font-size: 10px; }
+.horizon-breakdown-title small { color: #adb5b1; font-size: 8px; }
+.horizon-breakdown-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.horizon-breakdown-card { display: flex; flex-direction: column; gap: 5px; min-width: 0; padding: 9px 10px; border: 1px solid #f0ece5; border-radius: 6px; background: #fffdfa; }
+.horizon-breakdown-card strong { overflow: hidden; color: #53615d; font-size: 10px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.horizon-breakdown-card span, .horizon-breakdown-card small { color: #9da7a3; font-size: 8px; }
+.horizon-breakdown-card em { color: #398b72; font-family: "DM Mono"; font-size: 11px; font-style: normal; }
+@media (max-width: 760px) { .horizon-breakdown-grid { grid-template-columns: 1fr; } }

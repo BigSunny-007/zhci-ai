@@ -29,6 +29,15 @@ class RecommendationEvaluationPoint(BaseModel):
     cumulative_return: Decimal
 
 
+class RecommendationHorizonSummary(BaseModel):
+    horizon: str
+    evaluated_count: int
+    win_rate: Decimal
+    max_drawdown: Decimal
+    profit_loss_ratio: Decimal
+    recommendation_accuracy: Decimal
+
+
 class RecommendationEvaluationOverview(BaseModel):
     period: str
     evaluated_count: int
@@ -38,3 +47,4 @@ class RecommendationEvaluationOverview(BaseModel):
     recommendation_accuracy: Decimal
     data_status: str
     series: list[RecommendationEvaluationPoint]
+    by_horizon: list[RecommendationHorizonSummary] = []

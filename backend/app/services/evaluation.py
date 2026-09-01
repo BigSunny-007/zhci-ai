@@ -119,3 +119,22 @@ def summarize_outcomes(outcomes: list[EvaluationOutcome]) -> dict[str, Any]:
         "recommendation_accuracy": win_rate.quantize(Decimal("0.0001")),
         "series": series,
     }
+
+
+def summarize_by_horizon(
+    outcomes: dict[str, list[EvaluationOutcome]],
+) -> list[dict[str, Any]]:
+    summaries: list[dict[str, Any]] = []
+    for horizon, horizon_outcomes in sorted(outcomes.items()):
+        summary = summarize_outcomes(horizon_outcomes)
+        summaries.append(
+            {
+                "horizon": horizon,
+                "evaluated_count": summary["evaluated_count"],
+                "win_rate": summary["win_rate"],
+                "max_drawdown": summary["max_drawdown"],
+                "profit_loss_ratio": summary["profit_loss_ratio"],
+                "recommendation_accuracy": summary["recommendation_accuracy"],
+            }
+        )
+    return summaries

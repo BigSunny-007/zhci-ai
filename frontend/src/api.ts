@@ -74,6 +74,7 @@ export type RecommendationEvaluationOverview = {
   recommendation_accuracy: number;
   data_status: string;
   series: Array<{ date: string; symbol: string; realized_return: number; cumulative_return: number }>;
+  by_horizon?: Array<{ horizon: string; evaluated_count: number; win_rate: number; max_drawdown: number; profit_loss_ratio: number; recommendation_accuracy: number }>;
 };
 
 export type AdminOverview = {

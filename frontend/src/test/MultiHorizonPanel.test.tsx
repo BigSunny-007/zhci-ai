@@ -16,6 +16,7 @@ describe("多周期研判面板", () => {
     expect(screen.getByText("减仓观察")).toBeTruthy();
     expect(screen.getByText("已加载保存快照")).toBeTruthy();
     expect(screen.getByText("刷新三周期")).toBeTruthy();
+    expect(screen.getByText("不同周期结论存在冲突，请分别复核各周期证据，不要合并为单一交易信号。")).toBeTruthy();
   });
 
   it("刷新时独立请求三个周期并允许部分失败", async () => {

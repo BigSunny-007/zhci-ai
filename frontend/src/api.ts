@@ -80,6 +80,15 @@ export type ModelPolicy = {
   updated_at: string;
 };
 
+export type AuditIntegrityReport = {
+  checked_events: number;
+  valid_events: number;
+  invalid_events: number;
+  unverifiable_events: number;
+  checked_at: string;
+  data_scope: string;
+};
+
 export type WatchlistItem = {
   id: string;
   symbol: string;
@@ -272,6 +281,10 @@ export function getAdminOverview(token: string): Promise<AdminOverview> {
 
 export function getModelPolicies(token: string): Promise<ModelPolicy[]> {
   return request<ModelPolicy[]>("/admin/model-policies", {}, token);
+}
+
+export function getAuditIntegrity(token: string): Promise<AuditIntegrityReport> {
+  return request<AuditIntegrityReport>("/admin/audit-integrity", {}, token);
 }
 
 export function getWatchlist(token: string): Promise<WatchlistItem[]> {

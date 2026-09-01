@@ -34,6 +34,12 @@ export type Recommendation = {
   delivery_mode?: "generated" | "cached";
 };
 
+export type RecommendationHistoryItem = Recommendation & {
+  id: string;
+  evaluated_at?: string | null;
+  realized_return?: number | null;
+};
+
 export type WatchlistItem = {
   id: string;
   symbol: string;
@@ -210,6 +216,10 @@ export function getRecommendation(
 ): Promise<Recommendation> {
   const params = new URLSearchParams({ symbol, name, horizon });
   return request<Recommendation>(`/market/recommendation?${params.toString()}`, {}, token);
+}
+
+export function getRecommendations(token: string, limit = 12): Promise<RecommendationHistoryItem[]> {
+  return request<RecommendationHistoryItem[]>(`/market/recommendations?limit=${limit}`, {}, token);
 }
 
 export function getWatchlist(token: string): Promise<WatchlistItem[]> {

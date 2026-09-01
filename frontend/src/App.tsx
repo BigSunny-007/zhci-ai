@@ -9,8 +9,10 @@ import HoldingsPanel from "./HoldingsPanel";
 import NewsPanel from "./NewsPanel";
 import RiskProfilePanel from "./RiskProfilePanel";
 import EvidenceDrawer from "./EvidenceDrawer";
+import RecommendationTimeline from "./RecommendationTimeline";
 import "./freshness.css";
 import "./evidence.css";
+import "./timeline.css";
 import { addWatchlist, ApiError, clearSession, getMarketSession, getMe, getQuote, getRecommendation, getWatchlist, loadSession, logout, refreshSession, saveSession, TokenSession, UserProfile, MarketQuote, Recommendation, MarketSession } from "./api";
 
 type WatchItem = { symbol: string; name: string; price: string; change: string; percent: string; inflow: string; status: "up" | "down" };
@@ -49,7 +51,13 @@ function App() {
   const filtered = useMemo(() => watchlist.filter((item) => `${item.symbol}${item.name}`.includes(searchValue)), [watchlist, searchValue]);
 
   useEffect(() => {
-    getMarketSession().then(setMarketSession).catch(() => setMarketSession(null));
+    let active = true;
+    getMarketSession().then((next) => {
+      if (active) setMarketSession(next);
+    }).catch(() => {
+      if (active) setMarketSession(null);
+    });
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
@@ -181,6 +189,7 @@ function App() {
         <section className="content-grid"><div className="panel watch-panel"><div className="panel-header"><div><h2>我的自选 <span className="count">{watchlist.length}</span></h2><p>优先关注你已持有的标的</p></div><div className="panel-tools"><div className="search-box"><Search size={15}/><input value={searchValue} onChange={(event) => setSearchValue(event.target.value)} placeholder="搜索代码 / 名称" onKeyDown={(event) => { if (event.key === "Enter") addWatch(); }}/></div><button className="add-button" onClick={addWatch}><Plus size={16}/></button></div></div><div className="watch-table"><div className="table-head"><span>股票</span><span>最新价</span><span>涨跌幅</span><span>资金流向</span><span>走势</span></div>{filtered.map((item) => <button className={selected.symbol === item.symbol ? "watch-row selected" : "watch-row"} key={item.symbol} onClick={() => setSelected(item)}><span className="stock-name"><span className={item.status === "up" ? "stock-badge red-bg" : "stock-badge green-bg"}>{item.name.slice(0,1)}</span><span><strong>{item.name}</strong><small>{item.symbol}</small></span></span><strong>{item.price}</strong><span className={item.status === "up" ? "red" : "green"}>{item.percent}<small>{item.change}</small></span><span className={item.status === "up" ? "red" : "green"}>{item.inflow}</span><span className="row-spark"><MiniSparkline trend={item.status}/></span></button>)}</div><button className="view-all" onClick={() => setActiveNav("自选与持仓")}>查看全部自选 <span>→</span></button></div><div className="right-column"><div className="panel recommendation-panel"><div className="panel-header compact"><div><div className="section-kicker"><Sparkles size={14}/>AI 研判</div><h2>{selected.name} <span className="ticker">{selected.symbol}</span></h2></div><button className="more-button">···</button></div><div className="recommendation-badge"><span className="pulse"/>{liveRecommendation?.action ?? "建议持有"} <strong>·</strong> 信心度 {liveRecommendation ? `${(liveRecommendation.confidence * 100).toFixed(0)}%` : "78%"}</div>{liveRecommendation?.is_stale && <div className="stale-notice">缓存建议 · 非当前槽位生成，仅供复核</div>}<p className="recommendation-copy">{liveRecommendation?.rationale ?? "短期资金仍在流入，但上方套牢盘压力明显。建议维持当前仓位，等待量能确认后再做加仓决策。"}</p><div className="reason-list"><div><span className="reason-icon flow"><TrendingUp size={14}/></span><span><strong>资金流向</strong><small>近 1 小时主力净流入 <b className="red">{liveQuote ? `${liveQuote.net_inflow >= 0 ? "+" : ""}${(liveQuote.net_inflow / 100000000).toFixed(2)} 亿` : "+2.64 亿"}</b></small></span><em>有利</em></div><div><span className="reason-icon market"><LineChart size={14}/></span><span><strong>大盘环境</strong><small>上证指数 <b className="red">+0.63%</b>，市场温度偏多</small></span><em>中性偏多</em></div><div><span className="reason-icon news"><Newspaper size={14}/></span><span><strong>新闻情报</strong><small>2 条相关资讯，权威度加权情绪 <b>+0.18</b></small></span><em>中性</em></div></div><div className="recommendation-footer"><span>更新于 {liveRecommendation ? new Date(liveRecommendation.generated_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) : "10:00"} · {liveRecommendation?.model_version ?? "rule-based-v1"}</span><button onClick={() => setNotice("已打开完整证据链（演示）")}>查看完整依据 <span>→</span></button></div></div><div className="panel analytics-panel"><div className="panel-header compact"><div><div className="section-kicker"><TrendingUp size={14}/>绩效复盘</div><h2>组合跑赢基准 <span className="outperform">+3.21%</span></h2><p>近 30 个交易日 · AI 建议兑现率 71%</p></div><button className="more-button" onClick={() => setActiveNav("绩效复盘")}>···</button></div><div className="analytics-kpis"><div><span>组合收益</span><strong className="red">+8.42%</strong></div><div><span>最大回撤</span><strong>-2.68%</strong></div><div><span>盈亏比</span><strong>1.74</strong></div></div><div className="analytics-chart"><svg viewBox="0 0 420 90" preserveAspectRatio="none"><path d="M0 72 C55 70 80 65 110 62 S165 49 205 54 S260 35 290 40 S345 19 420 12" fill="none" stroke="#c95750" strokeWidth="2"/><path d="M0 78 C55 76 80 72 110 70 S165 62 205 64 S260 52 290 56 S345 43 420 38" fill="none" stroke="#b8c1bd" strokeWidth="1.5" strokeDasharray="4 4"/></svg><div><span>组合</span><span>沪深 300</span></div></div></div><NewsPanel token={session?.accessToken ?? null} symbol={selected.symbol}/></div></section>
         <HoldingsPanel token={session?.accessToken ?? null} />
         <RiskProfilePanel token={session?.accessToken ?? null} profile={profile} onProfileUpdated={setProfile} />
+        <RecommendationTimeline token={session?.accessToken ?? null} />
         {evidenceOpen && <EvidenceDrawer recommendation={liveRecommendation} quote={liveQuote} onClose={() => setEvidenceOpen(false)} />}
         <section className="disclaimer"><ShieldCheck size={16}/><span>智策 AI 仅提供数据整理与投研辅助，不构成任何投资建议。市场有风险，投资需谨慎。</span><a href="#risk">了解数据与模型边界</a></section>
       </div>

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { clearSession, loadSession, login, refreshSession, saveSession } from "../api";
+import { clearSession, getRecommendations, loadSession, login, refreshSession, saveSession } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -26,5 +26,13 @@ describe("API 会话客户端", () => {
       refreshToken: "next-refresh",
       emailVerified: true,
     });
+  });
+
+  it("按上限读取当前用户建议历史", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      new Response(JSON.stringify([]), { status: 200 }),
+    ));
+    await expect(getRecommendations("access-token", 5)).resolves.toEqual([]);
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/market/recommendations?limit=5"), expect.anything());
   });
 });

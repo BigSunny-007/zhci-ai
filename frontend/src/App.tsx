@@ -191,6 +191,18 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    if (!session) return;
+    const timer = window.setInterval(() => {
+      getRecommendation(session.accessToken, selected.symbol, selected.name).then((next) => {
+        setLiveRecommendation(next);
+        setRecommendationUnavailable(false);
+        setSyncState(next.delivery_mode === "cached" ? "已同步 · 使用最近保存研判" : "已同步 · 生成最新研判");
+      }).catch(() => setRecommendationUnavailable(true));
+    }, 60 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, [session, selected.symbol, selected.name]);
+
   const sessionLabel = marketSession?.session === "morning" || marketSession?.session === "afternoon" ? "沪深市场交易中" : marketSession?.is_trading_day ? "沪深市场休市" : "非交易日";
   const nextSlotLabel = marketSession?.next_recommendation_at ? new Date(marketSession.next_recommendation_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) : "下个交易日";
   const asOfLabel = marketSession?.as_of ? new Date(marketSession.as_of).toLocaleDateString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" }) : "2026年09月01日";

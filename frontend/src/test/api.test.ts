@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { changePassword, clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getHistory, getMarketIndex, getModelPolicies, getPortfolioRisk, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, resendVerification, saveSession, updateAlert } from "../api";
+import { addHolding, changePassword, clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getHistory, getMarketIndex, getModelPolicies, getPortfolioRisk, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, resendVerification, saveSession, updateAlert } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -106,6 +106,12 @@ describe("API 会话客户端", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(risk), { status: 200 })));
     await expect(getPortfolioRisk("user-token")).resolves.toEqual(risk);
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/portfolio/risk"), expect.anything());
+  });
+
+  it("保存持仓级目标回报与最大亏损", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: "h1", symbol: "600519.SH" }), { status: 201 })));
+    await expect(addHolding("user-token", { symbol: "600519.SH", name: "贵州茅台", quantity: 100, cost_price: 1500, target_return: 0.08, max_loss: 0.05 })).resolves.toEqual({ id: "h1", symbol: "600519.SH" });
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/portfolio/holdings"), expect.objectContaining({ method: "POST", body: expect.stringContaining('"max_loss":0.05') }));
   });
 
   it("导出当前账号投研数据", async () => {

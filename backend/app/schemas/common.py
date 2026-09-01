@@ -105,6 +105,10 @@ class PortfolioRiskPosition(BaseModel):
     market_value: Decimal
     weight: Decimal
     unrealized_pnl: Decimal | None
+    unrealized_return: Decimal | None
+    target_return: Decimal | None
+    max_loss: Decimal | None
+    risk_signal: Literal["within_limits", "target_reached", "loss_limit_breached", "unavailable"]
     quote_status: Literal["valued", "unavailable"]
     source: str
     as_of: datetime | None = None
@@ -119,6 +123,8 @@ class PortfolioRiskOverview(BaseModel):
     top_position_weight: Decimal
     concentration_index: Decimal
     concentration_level: Literal["empty", "balanced", "watch", "high", "unavailable"]
+    loss_limit_breached_count: int
+    target_reached_count: int
     data_status: str
     as_of: datetime
     positions: list[PortfolioRiskPosition]

@@ -80,6 +80,8 @@ async def portfolio_risk(
                     quantity=holding.quantity,
                     cost_price=holding.cost_price,
                     market_price=quote.price,
+                    target_return=holding.target_return,
+                    max_loss=holding.max_loss,
                     source=quote.source,
                     as_of=quote.as_of,
                 )
@@ -92,6 +94,8 @@ async def portfolio_risk(
                     quantity=holding.quantity,
                     cost_price=holding.cost_price,
                     market_price=None,
+                    target_return=holding.target_return,
+                    max_loss=holding.max_loss,
                     source=provider_name,
                     as_of=None,
                 )

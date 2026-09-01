@@ -5,17 +5,25 @@
 .portfolio-risk-kpis span { color: #9da7a3; font-size: 9px; }
 .portfolio-risk-kpis strong { color: #53615d; font-family: "DM Mono"; font-size: 12px; font-weight: 500; }
 .portfolio-risk-kpis .risk-level { font-family: inherit; font-size: 11px; }
+.portfolio-risk-alerts { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 22px 10px; }
+.risk-alert { padding: 4px 7px; border-radius: 4px; font-size: 8px; }
+.risk-alert.loss { color: #a7544e; background: #f9ebe8; }
+.risk-alert.target { color: #367f69; background: #eaf5f0; }
 .risk-level.balanced { color: #398b72; }
 .risk-level.watch { color: #b27c3e; }
 .risk-level.high { color: #b4675e; }
 .risk-level.unavailable, .risk-level.empty { color: #9da7a3; }
 .portfolio-risk-list { margin: 0 22px 12px; border-top: 1px solid #eef1ef; }
-.portfolio-risk-row { display: grid; grid-template-columns: 1.15fr 2fr .45fr; align-items: center; gap: 12px; min-height: 43px; border-bottom: 1px solid #f2f4f2; }
+.portfolio-risk-row { display: grid; grid-template-columns: 1.15fr 1.65fr .45fr auto; align-items: center; gap: 12px; min-height: 43px; border-bottom: 1px solid #f2f4f2; }
 .portfolio-risk-name strong { display: block; color: #56615f; font-size: 10px; font-weight: 600; }
 .portfolio-risk-name small { display: block; margin-top: 3px; color: #a4aca9; font-family: "DM Mono"; font-size: 8px; }
 .portfolio-risk-bar { height: 5px; overflow: hidden; border-radius: 5px; background: #edf1ef; }
 .portfolio-risk-bar span { display: block; height: 100%; border-radius: inherit; background: #c99c69; }
 .portfolio-risk-weight { color: #68746f; font-family: "DM Mono"; font-size: 10px; font-weight: 500; text-align: right; }
+.position-risk-signal { color: #8b9792; font-size: 8px; white-space: nowrap; }
+.position-risk-signal.target_reached { color: #398b72; }
+.position-risk-signal.loss_limit_breached { color: #b4675e; }
+.position-risk-signal.unavailable { color: #b27c3e; }
 .portfolio-risk-foot { display: flex; justify-content: space-between; padding: 10px 22px 14px; border-top: 1px solid #eef1ef; color: #9da7a3; font-size: 9px; }
 .portfolio-risk-foot span:last-child { color: #b0b7b4; font-size: 8px; }
-@media (max-width: 760px) { .portfolio-risk-kpis { grid-template-columns: repeat(2, 1fr); } .portfolio-risk-foot { display: block; line-height: 1.8; } }
+@media (max-width: 760px) { .portfolio-risk-kpis { grid-template-columns: repeat(2, 1fr); } .portfolio-risk-row { grid-template-columns: 1.15fr 1.45fr .55fr; } .position-risk-signal { display: none; } .portfolio-risk-foot { display: block; line-height: 1.8; } }

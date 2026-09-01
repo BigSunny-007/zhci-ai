@@ -17,6 +17,8 @@ class RiskPosition:
     quantity: Decimal
     cost_price: Decimal
     market_price: Decimal | None
+    target_return: Decimal | None
+    max_loss: Decimal | None
     source: str
     as_of: datetime | None
 
@@ -74,6 +76,8 @@ def summarize_portfolio_risk(
         data_status = "已按当前风险偏好完成组合集中度检查"
 
     serialized = []
+    loss_limit_breached_count = 0
+    target_reached_count = 0
     for position in sorted(
         positions,
         key=lambda item: weights.get(item.symbol, Decimal("0")),
@@ -85,6 +89,21 @@ def summarize_portfolio_risk(
             else Decimal("0")
         )
         cost_basis = position.quantity * position.cost_price
+        unrealized_return = (
+            (market_value - cost_basis) / cost_basis
+            if position.market_price is not None and cost_basis > 0
+            else None
+        )
+        if unrealized_return is None:
+            risk_signal = "unavailable"
+        elif position.max_loss is not None and unrealized_return <= -position.max_loss:
+            risk_signal = "loss_limit_breached"
+            loss_limit_breached_count += 1
+        elif position.target_return is not None and unrealized_return >= position.target_return:
+            risk_signal = "target_reached"
+            target_reached_count += 1
+        else:
+            risk_signal = "within_limits"
         serialized.append(
             {
                 "symbol": position.symbol,
@@ -96,6 +115,12 @@ def summarize_portfolio_risk(
                     if position.market_price is not None
                     else None
                 ),
+                "unrealized_return": (
+                    _q4(unrealized_return) if unrealized_return is not None else None
+                ),
+                "target_return": position.target_return,
+                "max_loss": position.max_loss,
+                "risk_signal": risk_signal,
                 "quote_status": "valued" if position.market_price is not None else "unavailable",
                 "source": position.source,
                 "as_of": position.as_of,
@@ -110,6 +135,8 @@ def summarize_portfolio_risk(
         "top_position_weight": top_position_weight,
         "concentration_index": concentration_index,
         "concentration_level": concentration_level,
+        "loss_limit_breached_count": loss_limit_breached_count,
+        "target_reached_count": target_reached_count,
         "data_status": data_status,
         "as_of": checked_at,
         "positions": serialized,

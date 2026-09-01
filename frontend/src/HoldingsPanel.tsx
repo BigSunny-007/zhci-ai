@@ -12,6 +12,8 @@ export default function HoldingsPanel({ token }: HoldingsPanelProps) {
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [costPrice, setCostPrice] = useState("");
+  const [targetReturn, setTargetReturn] = useState("");
+  const [maxLoss, setMaxLoss] = useState("");
   const [status, setStatus] = useState("登录后同步你的真实持仓");
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
 
@@ -31,10 +33,10 @@ export default function HoldingsPanel({ token }: HoldingsPanelProps) {
     event.preventDefault();
     if (!token) return;
     try {
-      const saved = await addHolding(token, { symbol: symbol.trim().toUpperCase(), name: name.trim() || "自选股", quantity: Number(quantity), cost_price: Number(costPrice) });
+      const saved = await addHolding(token, { symbol: symbol.trim().toUpperCase(), name: name.trim() || "自选股", quantity: Number(quantity), cost_price: Number(costPrice), target_return: targetReturn === "" ? null : Number(targetReturn) / 100, max_loss: maxLoss === "" ? null : Number(maxLoss) / 100 });
       setHoldings((current) => [saved, ...current]);
       setStatus("持仓已保存 · AI 将优先关注");
-      setSymbol(""); setName(""); setQuantity(""); setCostPrice(""); setOpen(false);
+      setSymbol(""); setName(""); setQuantity(""); setCostPrice(""); setTargetReturn(""); setMaxLoss(""); setOpen(false);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "持仓保存失败");
     }
@@ -55,7 +57,7 @@ export default function HoldingsPanel({ token }: HoldingsPanelProps) {
   return <section className="panel holdings-panel">
     <div className="panel-header compact"><div><div className="section-kicker"><WalletCards size={14}/>我的持仓</div><h2>组合市值 <span className="holdings-total">¥{displaySummary.market_value.toLocaleString("zh-CN", { maximumFractionDigits: 2 })}</span></h2><p>{status}</p></div><button className="add-holding-button" onClick={() => setOpen((visible) => !visible)} aria-label={open ? "关闭持仓表单" : "添加持仓"}>{open ? <X size={16}/> : <Plus size={16}/>}</button></div>
     {summary && <div className="holdings-summary"><span>成本 ¥{summary.cost_basis.toLocaleString("zh-CN", { maximumFractionDigits: 2 })}</span><strong className={summary.unrealized_pnl >= 0 ? "holding-positive" : "holding-negative"}>{summary.unrealized_pnl >= 0 ? "+" : ""}¥{summary.unrealized_pnl.toLocaleString("zh-CN", { maximumFractionDigits: 2 })}（{summary.unrealized_pnl_percent >= 0 ? "+" : ""}{(summary.unrealized_pnl_percent * 100).toFixed(2)}%）</strong><small>已估值 {summary.valued_positions}/{summary.positions_count}</small><small>{summary.as_of ? `估值于 ${new Date(summary.as_of).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}` : "估值时间未知"}</small></div>}
-    {open && <form className="holding-form" onSubmit={submit}><input value={symbol} onChange={(event) => setSymbol(event.target.value)} placeholder="股票代码" required minLength={2}/><input value={name} onChange={(event) => setName(event.target.value)} placeholder="名称（可选）"/><input value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder="持仓数量" type="number" min="0" step="any" required/><input value={costPrice} onChange={(event) => setCostPrice(event.target.value)} placeholder="成本价" type="number" min="0.01" step="any" required/><button className="holding-submit" disabled={!token}>保存持仓</button></form>}
+    {open && <form className="holding-form" onSubmit={submit}><input value={symbol} onChange={(event) => setSymbol(event.target.value)} placeholder="股票代码" required minLength={2}/><input value={name} onChange={(event) => setName(event.target.value)} placeholder="名称（可选）"/><input value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder="持仓数量" type="number" min="0" step="any" required/><input value={costPrice} onChange={(event) => setCostPrice(event.target.value)} placeholder="成本价" type="number" min="0.01" step="any" required/><input value={targetReturn} onChange={(event) => setTargetReturn(event.target.value)} placeholder="目标回报 %（可选）" type="number" min="-100" max="1000" step="0.1"/><input value={maxLoss} onChange={(event) => setMaxLoss(event.target.value)} placeholder="最大亏损 %（可选）" type="number" min="0" max="100" step="0.1"/><button className="holding-submit" disabled={!token}>保存持仓</button></form>}
     {holdings.length > 0 && <div className="holdings-list">{holdings.slice(0, 4).map((item) => <div className="holding-row" key={item.id}><span><strong>{item.name}</strong><small>{item.symbol}</small></span><span>{item.quantity.toLocaleString("zh-CN")} 股</span><strong>¥{(item.quantity * item.cost_price).toLocaleString("zh-CN", { maximumFractionDigits: 2 })}</strong><button className="holding-remove" onClick={() => remove(item)}>删除</button></div>)}</div>}
   </section>;
 }

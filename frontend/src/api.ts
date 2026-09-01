@@ -184,6 +184,10 @@ export type PortfolioRiskPosition = {
   market_value: number;
   weight: number;
   unrealized_pnl: number | null;
+  unrealized_return: number | null;
+  target_return: number | null;
+  max_loss: number | null;
+  risk_signal: "within_limits" | "target_reached" | "loss_limit_breached" | "unavailable";
   quote_status: "valued" | "unavailable";
   source: string;
   as_of?: string | null;
@@ -198,6 +202,8 @@ export type PortfolioRiskOverview = {
   top_position_weight: number;
   concentration_index: number;
   concentration_level: "empty" | "balanced" | "watch" | "high" | "unavailable";
+  loss_limit_breached_count: number;
+  target_reached_count: number;
   data_status: string;
   as_of: string;
   positions: PortfolioRiskPosition[];

@@ -184,6 +184,13 @@ export type MarketSession = {
   next_recommendation_at: string | null;
 };
 
+export type MarketHistoryPoint = {
+  time: string;
+  close: number;
+  volume: number;
+  net_inflow: number;
+};
+
 export type NewsItem = {
   id: number;
   symbol: string | null;
@@ -323,6 +330,10 @@ export function refreshSession(refreshToken: string): Promise<TokenSession> {
 export function getQuote(token: string, symbol: string, name: string): Promise<MarketQuote> {
   const params = new URLSearchParams({ symbol, name });
   return request<MarketQuote>(`/market/quote?${params.toString()}`, {}, token);
+}
+
+export function getHistory(token: string, symbol: string, days = 30): Promise<MarketHistoryPoint[]> {
+  return request<MarketHistoryPoint[]>(`/market/history?${new URLSearchParams({ symbol, days: String(days) }).toString()}`, {}, token);
 }
 
 export function getMarketSession(): Promise<MarketSession> {

@@ -19,6 +19,7 @@ import AlertsPanel from "./AlertsPanel";
 import DataProvidersPanel from "./DataProvidersPanel";
 import DataExportPanel from "./DataExportPanel";
 import SecurityPanel from "./SecurityPanel";
+import HistoryPanel from "./HistoryPanel";
 import "./freshness.css";
 import "./evidence.css";
 import "./timeline.css";
@@ -270,6 +271,7 @@ function App() {
         <DataProvidersPanel token={session?.accessToken ?? null} isAdmin={profile?.is_admin === true} />
         <DataExportPanel token={session?.accessToken ?? null} />
         <SecurityPanel token={session?.accessToken ?? null} onSessionInvalidated={handleLogout} />
+        <HistoryPanel token={session?.accessToken ?? null} symbol={selected.symbol} />
         {evidenceOpen && <EvidenceDrawer recommendation={liveRecommendation} quote={liveQuote} onClose={() => setEvidenceOpen(false)} />}
         <section className="disclaimer"><ShieldCheck size={16}/><span>智策 AI 仅提供数据整理与投研辅助，不构成任何投资建议。市场有风险，投资需谨慎。</span><a href="#risk">了解数据与模型边界</a></section>
       </div>

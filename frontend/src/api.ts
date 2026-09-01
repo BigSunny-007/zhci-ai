@@ -53,6 +53,17 @@ export type AnalyticsOverview = {
   series: Array<{ date: string; portfolio: number; benchmark: number }>;
 };
 
+export type RecommendationEvaluationOverview = {
+  period: string;
+  evaluated_count: number;
+  win_rate: number;
+  max_drawdown: number;
+  profit_loss_ratio: number;
+  recommendation_accuracy: number;
+  data_status: string;
+  series: Array<{ date: string; symbol: string; realized_return: number; cumulative_return: number }>;
+};
+
 export type AdminOverview = {
   generated_at: string;
   total_users: number;
@@ -310,6 +321,10 @@ export function getRecommendations(token: string, limit = 12): Promise<Recommend
 
 export function getAnalyticsOverview(token: string): Promise<AnalyticsOverview> {
   return request<AnalyticsOverview>("/analytics/overview", {}, token);
+}
+
+export function getRecommendationEvaluation(token: string): Promise<RecommendationEvaluationOverview> {
+  return request<RecommendationEvaluationOverview>("/analytics/recommendations", {}, token);
 }
 
 export function getAdminOverview(token: string): Promise<AdminOverview> {

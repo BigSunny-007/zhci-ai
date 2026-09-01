@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditIntegrity, getModelPolicies, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, saveSession, updateAlert } from "../api";
+import { clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditIntegrity, getDataProviders, getModelPolicies, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, saveSession, updateAlert } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -74,6 +74,12 @@ describe("API 会话客户端", () => {
     ));
     await expect(getSchedulerStatus("admin-token")).resolves.toEqual({ enabled: false, running: false });
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/admin/scheduler"), expect.anything());
+  });
+
+  it("读取管理员数据源目录", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([{ name: "demo", configured: true }]), { status: 200 })));
+    await expect(getDataProviders("admin-token")).resolves.toEqual([{ name: "demo", configured: true }]);
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/admin/data-providers"), expect.anything());
   });
 
   it("读取、创建并管理站内提醒", async () => {

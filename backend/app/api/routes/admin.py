@@ -9,7 +9,12 @@ from app.api.deps import admin_user
 from app.core.config import get_settings
 from app.db.session import get_db
 from app.models import AIModelPolicy, AuditLog, User, calculate_audit_integrity_hash
-from app.schemas.admin import AdminOverview, AuditIntegrityReport, SchedulerStatus
+from app.schemas.admin import (
+    AdminOverview,
+    AuditIntegrityReport,
+    DataProviderStatus,
+    SchedulerStatus,
+)
 from app.schemas.policy import (
     ModelPolicyCreate,
     ModelPolicyResponse,
@@ -17,6 +22,7 @@ from app.schemas.policy import (
     PolicyTransitionRequest,
 )
 from app.services.admin import admin_overview
+from app.services.data.provider import market_provider_catalog
 from app.services.policy import (
     count_policy_approvals,
     create_policy,
@@ -46,6 +52,12 @@ async def overview(
 @router.get("/scheduler", response_model=SchedulerStatus)
 async def scheduler_status(_: User = Depends(admin_user)) -> SchedulerStatus:
     return SchedulerStatus.model_validate(recommendation_scheduler.status())
+
+
+@router.get("/data-providers", response_model=list[DataProviderStatus])
+async def data_providers(_: User = Depends(admin_user)) -> list[DataProviderStatus]:
+    configured = get_settings().market_data_provider
+    return [DataProviderStatus.model_validate(item) for item in market_provider_catalog(configured)]
 
 
 @router.get("/audit-integrity", response_model=AuditIntegrityReport)

@@ -27,6 +27,16 @@ class SchedulerStatus(BaseModel):
     timezone: str
 
 
+class DataProviderStatus(BaseModel):
+    name: str
+    kind: str
+    available: bool
+    configured: bool
+    description: str
+    limitations: list[str]
+    source_url: str | None
+
+
 class AuditIntegrityReport(BaseModel):
     checked_events: int
     valid_events: int

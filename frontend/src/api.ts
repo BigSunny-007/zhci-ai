@@ -97,6 +97,16 @@ export type SchedulerStatus = {
   timezone: string;
 };
 
+export type DataProviderStatus = {
+  name: string;
+  kind: string;
+  available: boolean;
+  configured: boolean;
+  description: string;
+  limitations: string[];
+  source_url: string | null;
+};
+
 export type Alert = {
   id: string;
   symbol: string;
@@ -309,6 +319,10 @@ export function getAuditIntegrity(token: string): Promise<AuditIntegrityReport> 
 
 export function getSchedulerStatus(token: string): Promise<SchedulerStatus> {
   return request<SchedulerStatus>("/admin/scheduler", {}, token);
+}
+
+export function getDataProviders(token: string): Promise<DataProviderStatus[]> {
+  return request<DataProviderStatus[]>("/admin/data-providers", {}, token);
 }
 
 export function getAlerts(token: string): Promise<Alert[]> {

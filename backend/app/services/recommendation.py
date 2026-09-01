@@ -30,6 +30,9 @@ def generate_recommendation(
     current_position: Decimal = Decimal("0"),
     risk_profile: str = "balanced",
     target_return_rate: Decimal | None = None,
+    holding_cost_price: Decimal | None = None,
+    holding_target_return: Decimal | None = None,
+    holding_max_loss: Decimal | None = None,
     max_quote_age_seconds: int | None = 1800,
     weights: PolicyWeights | None = None,
     model_version: str = "rule-based-v1",
@@ -79,6 +82,26 @@ def generate_recommendation(
     risk_breach = current_position > position_limit
     if risk_breach:
         action = "减仓观察"
+    holding_return = (
+        (quote.price - holding_cost_price) / holding_cost_price
+        if holding_cost_price is not None and holding_cost_price > 0
+        else None
+    )
+    holding_loss_breach = (
+        holding_return is not None
+        and holding_max_loss is not None
+        and holding_return <= -holding_max_loss
+    )
+    holding_target_reached = (
+        holding_return is not None
+        and holding_target_return is not None
+        and holding_return >= holding_target_return
+    )
+    if holding_loss_breach:
+        action = "减仓观察"
+        confidence = min(confidence, Decimal("0.55"))
+    elif holding_target_reached and action == "买入观察":
+        action = "持有观察"
     base_position = (
         min(Decimal("0.20"), position_limit)
         if action == "买入观察"
@@ -107,6 +130,15 @@ def generate_recommendation(
                 else f"行情快照年龄 {quote_age_seconds} 秒，未超过新鲜度阈值。"
             ),
             "当前仓位超过风险上限，优先控制超配风险。" if risk_breach else "当前仓位未超过风险上限。",
+            (
+                f"持仓收益率 {holding_return:.2%} 已触发最大亏损 {holding_max_loss:.2%}，优先复核风险。"
+                if holding_loss_breach
+                else f"持仓收益率 {holding_return:.2%} 已达到目标回报 {holding_target_return:.2%}，不追高。"
+                if holding_target_reached
+                else "持仓级目标与亏损边界未触发。"
+                if holding_return is not None and (holding_target_return is not None or holding_max_loss is not None)
+                else "未配置持仓级目标或亏损边界。"
+            ),
             "证据不足时仅作观察，不构成交易指令。",
         ]
     )
@@ -130,6 +162,21 @@ def generate_recommendation(
         "fund_flow_status": quote.fund_flow_status,
         "quote_max_age_seconds": max_quote_age_seconds,
         "target_return_rate": str(target_return_rate) if target_return_rate is not None else None,
+        "holding_risk": {
+            "cost_price": str(holding_cost_price) if holding_cost_price is not None else None,
+            "target_return": str(holding_target_return) if holding_target_return is not None else None,
+            "max_loss": str(holding_max_loss) if holding_max_loss is not None else None,
+            "unrealized_return": str(holding_return) if holding_return is not None else None,
+            "signal": (
+                "loss_limit_breached"
+                if holding_loss_breach
+                else "target_reached"
+                if holding_target_reached
+                else "within_limits"
+                if holding_return is not None
+                else "unavailable"
+            ),
+        },
         "limitations": ["演示数据源", "未接入真实实时行情", "不得直接用于投资决策"],
     }
     return RecommendationResponse(

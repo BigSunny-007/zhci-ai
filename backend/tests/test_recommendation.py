@@ -119,3 +119,41 @@ def test_stale_quote_blocks_new_position_suggestion():
     assert result.suggested_position == Decimal("0")
     assert result.confidence == Decimal("0.45")
     assert result.evidence["quote_freshness"] == "stale"
+
+
+def test_holding_max_loss_breach_forces_de_risking_and_is_preserved_in_evidence():
+    result = generate_recommendation(
+        quote("1000000", "2").model_copy(update={"price": Decimal("90")}),
+        news("0.5"),
+        holding_cost_price=Decimal("100"),
+        holding_target_return=Decimal("0.20"),
+        holding_max_loss=Decimal("0.05"),
+    )
+    holding_risk = result.evidence["holding_risk"]
+    assert result.action == "减仓观察"
+    assert result.confidence <= Decimal("0.55")
+    assert holding_risk == {
+        "cost_price": "100",
+        "target_return": "0.20",
+        "max_loss": "0.05",
+        "unrealized_return": "-0.1",
+        "signal": "loss_limit_breached",
+    }
+
+
+def test_holding_target_reached_downgrades_buy_signal_to_hold():
+    result = generate_recommendation(
+        quote("1000000", "2").model_copy(update={"price": Decimal("120")}),
+        news("0.5"),
+        holding_cost_price=Decimal("100"),
+        holding_target_return=Decimal("0.15"),
+        holding_max_loss=Decimal("0.10"),
+    )
+    assert result.action == "持有观察"
+    assert result.evidence["holding_risk"]["signal"] == "target_reached"
+
+
+def test_missing_holding_rules_are_explicitly_unavailable():
+    result = generate_recommendation(quote("1000000", "2"), news("0.5"))
+    assert result.evidence["holding_risk"]["signal"] == "unavailable"
+    assert result.evidence["holding_risk"]["unrealized_return"] is None

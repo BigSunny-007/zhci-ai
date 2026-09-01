@@ -19,6 +19,13 @@ function formatInflow(value: unknown): string {
   return `${sign}${(parsed / 100000000).toFixed(2)} 亿`;
 }
 
+function formatPercent(value: unknown, signed = false): string {
+  const parsed = asNumber(value);
+  if (parsed === null) return "未配置";
+  const sign = signed && parsed > 0 ? "+" : "";
+  return `${sign}${(parsed * 100).toFixed(1)}%`;
+}
+
 export default function EvidenceDrawer({ recommendation, quote, onClose }: EvidenceDrawerProps) {
   const evidence = recommendation?.evidence ?? {};
   const quoteEvidence = (evidence.quote ?? {}) as Record<string, unknown>;
@@ -30,6 +37,15 @@ export default function EvidenceDrawer({ recommendation, quote, onClose }: Evide
   const newsItems = Array.isArray(evidence.news) ? evidence.news : [];
   const marketContext = (evidence.market_context ?? {}) as Record<string, unknown>;
   const marketChange = asNumber(marketContext.change_percent);
+  const holdingRisk = (evidence.holding_risk ?? {}) as Record<string, unknown>;
+  const holdingSignal = String(holdingRisk.signal ?? "unavailable");
+  const holdingSignalLabel: Record<string, string> = {
+    loss_limit_breached: "已触发最大亏损",
+    target_reached: "已达到目标回报",
+    within_limits: "边界内",
+    unavailable: "未配置",
+  };
+  const hasHoldingRules = holdingSignal !== "unavailable" || [holdingRisk.cost_price, holdingRisk.target_return, holdingRisk.max_loss].some((value) => value !== undefined && value !== null);
 
   return (
     <div className="evidence-overlay" role="presentation" onClick={onClose}>
@@ -43,6 +59,7 @@ export default function EvidenceDrawer({ recommendation, quote, onClose }: Evide
           <section className="evidence-section"><h3>行情与资金</h3><div className="evidence-grid"><div><span>最新价</span><strong>{asNumber(quoteEvidence.price ?? quote?.price)?.toFixed(2) ?? "暂无数据"}</strong></div><div><span>涨跌幅</span><strong>{asNumber(quoteEvidence.change_percent ?? quote?.change_percent)?.toFixed(2) ?? "暂无数据"}%</strong></div><div><span>净流入</span><strong>{formatInflow(quoteEvidence.net_inflow ?? quote?.net_inflow)}</strong></div><div><span>数据源</span><strong>{String(quoteEvidence.source ?? quote?.source ?? "演示")}</strong></div></div></section>
           <section className="evidence-section"><h3>评分权重</h3><div className="evidence-grid"><div><span>资金流</span><strong>{String(weights.fund_flow ?? "未提供")}</strong></div><div><span>价格动量</span><strong>{String(weights.momentum ?? "未提供")}</strong></div><div><span>新闻权威度</span><strong>{String(weights.news_authority_adjusted ?? "未提供")}</strong></div><div><span>策略版本</span><strong>{String(evidence.policy_version ?? recommendation?.model_version ?? "未提供")}</strong></div></div></section>
           <section className="evidence-section"><h3>风险约束</h3><div className="evidence-grid"><div><span>风险档位</span><strong>{String(evidence.risk_profile ?? "未提供")}</strong></div><div><span>当前仓位</span><strong>{currentPosition === null ? "暂无数据" : `${(currentPosition * 100).toFixed(1)}%`}</strong></div><div><span>仓位上限</span><strong>{limit === null ? "暂无数据" : `${(limit * 100).toFixed(0)}%`}</strong></div><div><span>超配状态</span><strong className={evidence.risk_breach ? "warning" : ""}>{evidence.risk_breach ? "已超限" : "未超限"}</strong></div></div></section>
+          <section className="evidence-section"><h3>持仓级规则</h3><div className="evidence-grid"><div><span>成本价</span><strong>{hasHoldingRules && holdingRisk.cost_price !== undefined && holdingRisk.cost_price !== null ? asNumber(holdingRisk.cost_price)?.toFixed(2) ?? "暂无数据" : "未配置"}</strong></div><div><span>当前收益率</span><strong className={holdingSignal === "loss_limit_breached" ? "warning" : ""}>{formatPercent(holdingRisk.unrealized_return, true)}</strong></div><div><span>目标回报</span><strong>{formatPercent(holdingRisk.target_return, true)}</strong></div><div><span>最大亏损</span><strong>{formatPercent(holdingRisk.max_loss)}</strong></div><div><span>触发状态</span><strong className={holdingSignal === "loss_limit_breached" ? "warning" : ""}>{holdingSignalLabel[holdingSignal] ?? "未配置"}</strong></div></div></section>
           <section className="evidence-section"><h3>数据质量</h3><div className="evidence-quality"><span className={freshness === "已过期" ? "warning-dot" : "ok-dot"}/><strong>{freshness}</strong><span>{age === null ? "快照年龄未知" : `快照年龄 ${Math.round(age / 60)} 分钟`}</span><span>阈值 {asNumber(evidence.quote_max_age_seconds) ?? "—"} 秒</span></div></section>
           <section className="evidence-section"><h3>相关新闻 <small>{newsItems.length} 条</small></h3>{newsItems.slice(0, 5).map((item, index) => { const news = item as Record<string, unknown>; return <div className="evidence-news" key={String(news.id ?? index)}><strong>{String(news.title ?? "未命名资讯")}</strong><span>{String(news.source_name ?? "未知来源")} · 权威度 {String(news.authority_score ?? "—")}</span></div>; })}</section>
           <section className="evidence-section"><h3>大盘环境</h3><div className="evidence-grid"><div><span>指数</span><strong>{String(marketContext.name ?? "未取得快照")}</strong></div><div><span>涨跌幅</span><strong>{marketChange === null ? "暂无数据" : (marketChange >= 0 ? "+" : "") + marketChange.toFixed(2) + "%"}</strong></div><div><span>数据源</span><strong>{String(marketContext.source ?? "未提供")}</strong></div><div><span>上下文修正</span><strong>{String(evidence.market_context_adjustment ?? "0.00")}</strong></div></div></section>

@@ -154,6 +154,9 @@ async def recommendation(
         current_position=current_position,
         risk_profile=user.risk_profile,
         target_return_rate=user.target_return_rate,
+        holding_cost_price=holding.cost_price if holding else None,
+        holding_target_return=holding.target_return if holding else None,
+        holding_max_loss=holding.max_loss if holding else None,
         max_quote_age_seconds=get_settings().recommendation_quote_max_age_seconds,
         market_index=market_index_data,
     )

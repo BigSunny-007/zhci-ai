@@ -13,6 +13,17 @@ const demoNews: NewsItem[] = [
 export default function NewsPanel({ token, symbol }: NewsPanelProps) {
   const [items, setItems] = useState<NewsItem[]>(demoNews);
   const [status, setStatus] = useState(token ? "正在同步" : "演示数据");
+  const [syncing, setSyncing] = useState(false);
+
+  const refresh = () => {
+    if (!token || syncing) return;
+    setSyncing(true);
+    setStatus("正在同步");
+    getNews(token, symbol).then((nextItems) => {
+      setItems(nextItems);
+      setStatus(nextItems.length ? "权威来源优先" : "暂无相关新闻");
+    }).catch(() => setStatus("同步失败 · 保留上次资讯")).finally(() => setSyncing(false));
+  };
 
   useEffect(() => {
     if (!token) {
@@ -30,5 +41,5 @@ export default function NewsPanel({ token, symbol }: NewsPanelProps) {
     return () => { active = false; };
   }, [token, symbol]);
 
-  return <div className="panel news-panel"><div className="panel-header compact"><div><div className="section-kicker"><Newspaper size={14}/>市场情报</div><h2>{status}</h2><p>按权威度加权 · {symbol}</p></div><button className="more-button" aria-label="刷新新闻">···</button></div>{items.slice(0, 3).map((item) => <div className="news-item" key={item.id}><span className="news-time">{new Date(item.published_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}</span><div className="news-content"><strong>{item.title}</strong><p>{item.source_name} · <span className={item.sentiment_score > 0 ? "red" : ""}>{item.sentiment_score > 0 ? "偏多" : item.sentiment_score < 0 ? "偏空" : "中性"}</span><span className="authority">权威度 {(item.authority_score * 100).toFixed(0)}%</span></p></div>{item.source_url && <a href={item.source_url} target="_blank" rel="noreferrer" aria-label="打开新闻来源"><ExternalLink size={13}/></a>}</div>)}</div>;
+  return <div className="panel news-panel"><div className="panel-header compact"><div><div className="section-kicker"><Newspaper size={14}/>市场情报</div><h2>{status}</h2><p>按权威度加权 · {symbol}</p></div><button className="more-button news-refresh" aria-label="刷新新闻" onClick={refresh} disabled={!token || syncing}>{syncing ? "…" : "↻"}</button></div>{items.slice(0, 3).map((item) => <div className="news-item" key={item.id}><span className="news-time">{new Date(item.published_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}</span><div className="news-content"><strong>{item.title}</strong><p>{item.source_name} · <span className={item.sentiment_score > 0 ? "red" : ""}>{item.sentiment_score > 0 ? "偏多" : item.sentiment_score < 0 ? "偏空" : "中性"}</span><span className="authority">权威度 {(item.authority_score * 100).toFixed(0)}%</span></p></div>{item.source_url && <a href={item.source_url} target="_blank" rel="noreferrer" aria-label="打开新闻来源"><ExternalLink size={13}/></a>}</div>)}</div>;
 }

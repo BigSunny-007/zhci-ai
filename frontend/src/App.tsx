@@ -17,6 +17,7 @@ import AuditPanel from "./AuditPanel";
 import SchedulerPanel from "./SchedulerPanel";
 import AlertsPanel from "./AlertsPanel";
 import DataProvidersPanel from "./DataProvidersPanel";
+import DataExportPanel from "./DataExportPanel";
 import "./freshness.css";
 import "./evidence.css";
 import "./timeline.css";
@@ -27,6 +28,7 @@ import "./audit.css";
 import "./scheduler.css";
 import "./alerts.css";
 import "./providers.css";
+import "./data-export.css";
 import { addWatchlist, ApiError, clearSession, getMarketSession, getMe, getPortfolioSummary, getQuote, getRecommendation, getWatchlist, loadSession, logout, refreshSession, saveSession, TokenSession, UserProfile, MarketQuote, Recommendation, MarketSession, PortfolioSummary } from "./api";
 
 type WatchItem = { symbol: string; name: string; price: string; change: string; percent: string; inflow: string; status: "up" | "down" };
@@ -226,6 +228,7 @@ function App() {
         <SchedulerPanel token={session?.accessToken ?? null} isAdmin={profile?.is_admin === true} />
         <AlertsPanel token={session?.accessToken ?? null} symbol={selected.symbol} />
         <DataProvidersPanel token={session?.accessToken ?? null} isAdmin={profile?.is_admin === true} />
+        <DataExportPanel token={session?.accessToken ?? null} />
         {evidenceOpen && <EvidenceDrawer recommendation={liveRecommendation} quote={liveQuote} onClose={() => setEvidenceOpen(false)} />}
         <section className="disclaimer"><ShieldCheck size={16}/><span>智策 AI 仅提供数据整理与投研辅助，不构成任何投资建议。市场有风险，投资需谨慎。</span><a href="#risk">了解数据与模型边界</a></section>
       </div>

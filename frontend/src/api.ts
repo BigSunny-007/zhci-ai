@@ -165,6 +165,15 @@ export type PortfolioSummary = {
   as_of: string;
 };
 
+export type UserDataExport = {
+  exported_at: string;
+  user: UserProfile;
+  holdings: HoldingItem[];
+  watchlist: WatchlistItem[];
+  recommendations: RecommendationHistoryItem[];
+  audit_events: Array<Record<string, unknown>>;
+};
+
 export type MarketSession = {
   as_of: string;
   timezone: string;
@@ -413,6 +422,10 @@ export function getHoldings(token: string): Promise<HoldingItem[]> {
 
 export function getPortfolioSummary(token: string): Promise<PortfolioSummary> {
   return request<PortfolioSummary>("/portfolio/summary", {}, token);
+}
+
+export function getDataExport(token: string): Promise<UserDataExport> {
+  return request<UserDataExport>("/auth/data-export", {}, token);
 }
 
 export function addHolding(

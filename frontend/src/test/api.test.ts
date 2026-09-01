@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataProviders, getModelPolicies, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, saveSession, updateAlert } from "../api";
+import { clearSession, createAlert, deleteAlert, getAdminOverview, getAlerts, getAnalyticsOverview, getAuditEvents, getAuditIntegrity, getDataExport, getDataProviders, getModelPolicies, getPortfolioSummary, getRecommendationEvaluation, getRecommendations, getSchedulerStatus, loadSession, login, refreshSession, saveSession, updateAlert } from "../api";
 
 describe("API 会话客户端", () => {
   beforeEach(() => {
@@ -98,6 +98,12 @@ describe("API 会话客户端", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ market_value: 100, unrealized_pnl: 5 }), { status: 200 })));
     await expect(getPortfolioSummary("user-token")).resolves.toEqual({ market_value: 100, unrealized_pnl: 5 });
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/portfolio/summary"), expect.anything());
+  });
+
+  it("导出当前账号投研数据", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ exported_at: "2026-09-01T00:00:00Z", holdings: [] }), { status: 200 })));
+    await expect(getDataExport("user-token")).resolves.toEqual({ exported_at: "2026-09-01T00:00:00Z", holdings: [] });
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/auth/data-export"), expect.anything());
   });
 
   it("读取、创建并管理站内提醒", async () => {
